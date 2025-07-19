@@ -108,7 +108,7 @@ resource "aws_ecs_service" "main" {
 # Route53 Record
 resource "aws_route53_record" "game" {
   zone_id = local.hosted_zone_id
-  name    = var.subdomain
+  name    = "${var.subdomain}.${var.domain_name}"
   type    = "A"
   
   alias {
