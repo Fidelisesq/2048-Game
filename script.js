@@ -118,6 +118,7 @@ class Game2048 {
     }
 
     bindEvents() {
+        // Keyboard events
         document.addEventListener('keydown', (e) => {
             switch(e.key) {
                 case 'ArrowLeft':
@@ -137,6 +138,40 @@ class Game2048 {
                     this.move('down');
                     break;
             }
+        });
+
+        // Touch events for mobile
+        let startX, startY;
+        const gameContainer = document.querySelector('.game-container');
+        
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+        
+        gameContainer.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!startX || !startY) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const diffX = startX - endX;
+            const diffY = startY - endY;
+            
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (Math.abs(diffX) > 30) {
+                    this.move(diffX > 0 ? 'left' : 'right');
+                }
+            } else {
+                // Vertical swipe
+                if (Math.abs(diffY) > 30) {
+                    this.move(diffY > 0 ? 'up' : 'down');
+                }
+            }
+            
+            startX = startY = null;
         });
     }
 
