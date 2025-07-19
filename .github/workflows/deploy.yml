@@ -104,7 +104,8 @@ jobs:
           terraform import aws_lb_target_group.app $TG_ARN || true
         fi
         
-        # Skip Route53 import to ensure correct subdomain record creation
+        # Remove incorrect Route53 record from state if it exists
+        terraform state rm aws_route53_record.game || true
       working-directory: ./terraform
       continue-on-error: true
 
