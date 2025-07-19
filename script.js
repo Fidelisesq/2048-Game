@@ -148,6 +148,7 @@ class Game2048 {
             e.preventDefault();
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
+            this.createRipple(e.touches[0].clientX, e.touches[0].clientY);
         });
         
         gameContainer.addEventListener('touchend', (e) => {
@@ -162,17 +163,38 @@ class Game2048 {
             if (Math.abs(diffX) > Math.abs(diffY)) {
                 // Horizontal swipe
                 if (Math.abs(diffX) > 30) {
+                    this.addSwipeEffect();
                     this.move(diffX > 0 ? 'left' : 'right');
                 }
             } else {
                 // Vertical swipe
                 if (Math.abs(diffY) > 30) {
+                    this.addSwipeEffect();
                     this.move(diffY > 0 ? 'up' : 'down');
                 }
             }
             
             startX = startY = null;
         });
+    }
+
+    createRipple(x, y) {
+        const gameContainer = document.querySelector('.game-container');
+        const rect = gameContainer.getBoundingClientRect();
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.left = `${x - rect.left - 20}px`;
+        ripple.style.top = `${y - rect.top - 20}px`;
+        gameContainer.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    }
+
+    addSwipeEffect() {
+        const gameContainer = document.querySelector('.game-container');
+        gameContainer.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+            gameContainer.style.transform = 'scale(1)';
+        }, 100);
     }
 
     restart() {
