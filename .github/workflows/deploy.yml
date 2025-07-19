@@ -74,6 +74,28 @@ jobs:
       run: terraform validate
       working-directory: ./terraform
 
+    - name: Import existing resources
+      run: |
+        # Import existing resources if they exist
+        terraform import aws_iam_role.ecs_task_execution_role ecsTaskExecutionRole-2048 || true
+        terraform import aws_ecr_repository.game_repo 2048-game || true
+        terraform import aws_ecs_cluster.game_cluster 2048-cluster || true
+        terraform import aws_cloudwatch_log_group.ecs_log_group /ecs/2048-task-def || true
+        
+        # Get ALB ARN and import
+        ALB_ARN=$(aws elbv2 describe-load-balancers --names 2048-alb --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || echo "")
+        if [ "$ALB_ARN" != "" ] && [ "$ALB_ARN" != "None" ]; then
+          terraform import aws_lb.main $ALB_ARN || true
+        fi
+        
+        # Get Target Group ARN and import
+        TG_ARN=$(aws elbv2 describe-target-groups --names 2048-tg --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
+        if [ "$TG_ARN" != "" ] && [ "$TG_ARN" != "None" ]; then
+          terraform import aws_lb_target_group.app $TG_ARN || true
+        fi
+      working-directory: ./terraform
+      continue-on-error: true
+
     - name: Terraform Plan
       env:
         TF_LOG: DEBUG
