@@ -223,7 +223,12 @@ jobs:
         aws ecs describe-services --cluster 2048-cluster --services 2048-service --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}'
         
         echo "🔍 Checking ECS Tasks..."
-        aws ecs list-tasks --cluster 2048-cluster --service-name 2048-service --query 'taskArns[0]' --output text | xargs -I {} aws ecs describe-tasks --cluster 2048-cluster --tasks {} --query 'tasks[0].{LastStatus:lastStatus,HealthStatus:healthStatus}'
+        TASK_ARN=$(aws ecs list-tasks --cluster 2048-cluster --service-name 2048-service --query 'taskArns[0]' --output text)
+        if [ "$TASK_ARN" != "None" ] && [ "$TASK_ARN" != "" ]; then
+          aws ecs describe-tasks --cluster 2048-cluster --tasks $TASK_ARN --query 'tasks[0].{LastStatus:lastStatus,HealthStatus:healthStatus}'
+        else
+          echo "No tasks running"
+        fi
         
         echo "🔍 Checking Target Group Health..."
         aws elbv2 describe-target-health --target-group-arn $(aws elbv2 describe-target-groups --names 2048-tg --query 'TargetGroups[0].TargetGroupArn' --output text)
