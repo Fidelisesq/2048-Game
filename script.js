@@ -88,9 +88,29 @@ class Game2048 {
 
         if (moved) {
             this.grid = newGrid;
+            
+            // Check for win
+            if (this.checkWin()) {
+                setTimeout(() => {
+                    if (confirm('You won! Reached 2048! Continue playing?')) {
+                        // Continue playing
+                    } else {
+                        this.restart();
+                    }
+                }, 100);
+            }
+            
             this.addRandomTile();
             this.updateDisplay();
             this.updateScore();
+            
+            // Check for loss
+            if (this.checkLoss()) {
+                setTimeout(() => {
+                    alert('Game Over! No more moves available.');
+                    this.restart();
+                }, 100);
+            }
         }
     }
 
@@ -195,6 +215,40 @@ class Game2048 {
         setTimeout(() => {
             gameContainer.style.transform = 'scale(1)';
         }, 100);
+    }
+
+    checkWin() {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.grid[i][j] === 2048) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    checkLoss() {
+        // Check if grid is full
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.grid[i][j] === 0) {
+                    return false;
+                }
+            }
+        }
+        
+        // Check for possible merges
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                const current = this.grid[i][j];
+                if ((i < this.size - 1 && this.grid[i + 1][j] === current) ||
+                    (j < this.size - 1 && this.grid[i][j + 1] === current)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     restart() {
