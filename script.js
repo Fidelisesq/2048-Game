@@ -103,14 +103,14 @@ class Game2048 {
             this.addRandomTile();
             this.updateDisplay();
             this.updateScore();
-            
-            // Check for loss
-            if (this.checkLoss()) {
-                setTimeout(() => {
-                    alert('Game Over! No more moves available.');
-                    this.restart();
-                }, 100);
-            }
+        }
+        
+        // Always check for loss after any move attempt
+        if (this.checkLoss()) {
+            setTimeout(() => {
+                alert('Game Over! No more moves available.');
+                this.restart();
+            }, 100);
         }
     }
 
