@@ -2,9 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// Read and evaluate the game script
-const gameScript = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8');
-
 // Mock DOM elements for testing
 global.document = {
     querySelector: () => ({ innerHTML: '' }),
@@ -16,7 +13,8 @@ global.document = {
     addEventListener: () => {}
 };
 
-// Evaluate the script
+// Read and evaluate the game script
+const gameScript = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8');
 eval(gameScript.replace('const game = new Game2048();', ''));
 
 // Test game initialization
