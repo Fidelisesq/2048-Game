@@ -66,10 +66,12 @@ jobs:
     - name: Debug Secrets
       run: |
         echo "Checking required secrets..."
-        echo "DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}"
-        echo "SUBDOMAIN: ${{ secrets.SUBDOMAIN }}"
-        echo "VPC_ID: ${{ secrets.VPC_ID }}"
-        echo "Expected record name: ${{ secrets.SUBDOMAIN }}.${{ secrets.DOMAIN_NAME }}"
+        echo "DOMAIN_NAME: '${{ secrets.DOMAIN_NAME }}'"
+        echo "SUBDOMAIN: '${{ secrets.SUBDOMAIN }}'"
+        echo "VPC_ID: '${{ secrets.VPC_ID }}'"
+        echo "Expected record name: '${{ secrets.SUBDOMAIN }}.${{ secrets.DOMAIN_NAME }}'"
+        echo "Length DOMAIN_NAME: ${#TF_VAR_domain_name}"
+        echo "Length SUBDOMAIN: ${#TF_VAR_subdomain}"
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
