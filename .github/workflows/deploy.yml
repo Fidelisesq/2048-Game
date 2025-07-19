@@ -139,6 +139,10 @@ jobs:
         echo "load_balancer_url=$ALB_URL" >> $GITHUB_OUTPUT
         echo "🎮 Game URL: https://play-2048.fozdigitalz.com"
         echo "🔗 Direct ALB URL: http://$ALB_URL"
+        
+        # Verify Route53 record creation
+        echo "🔍 Checking Route53 records..."
+        aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.HOSTED_ZONE_ID }} --query 'ResourceRecordSets[?Type==`A`].[Name,Type,AliasTarget.DNSName]' --output table
       working-directory: ./terraform
 
   destroy:
