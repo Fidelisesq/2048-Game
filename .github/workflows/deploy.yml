@@ -17,6 +17,8 @@ env:
   TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
   TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
   TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+  TF_VAR_certificate_arn: ${{ secrets.CERTIFICATE_ARN }}
+  TF_VAR_hosted_zone_id: ${{ secrets.HOSTED_ZONE_ID }}
 
 jobs:
   test:
@@ -51,16 +53,11 @@ jobs:
       with:
         terraform_wrapper: false
 
-    - name: Debug Environment Variables
+    - name: Debug Secrets
       run: |
-        echo "AWS_REGION: us-east-1"
-        echo "ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}"
-        echo "ECS_SERVICE: ${{ secrets.ECS_SERVICE }}"
-        echo "ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}"
+        echo "Checking required secrets..."
         echo "DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}"
-        echo "SUBDOMAIN: ${{ secrets.SUBDOMAIN }}"
         echo "VPC_ID: ${{ secrets.VPC_ID }}"
-        echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -69,89 +66,27 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Debug Terraform Variables
-      run: |
-        echo "=== Terraform Variables ==="
-        echo "TF_VAR_aws_region: $TF_VAR_aws_region"
-        echo "TF_VAR_domain_name: $TF_VAR_domain_name"
-        echo "TF_VAR_subdomain: $TF_VAR_subdomain"
-        echo "TF_VAR_vpc_id: $TF_VAR_vpc_id"
-        echo "TF_VAR_aws_account_id: $TF_VAR_aws_account_id"
-        echo "Working directory: $(pwd)"
-        echo "Terraform files:"
-        ls -la ./terraform/
-      env:
-        TF_VAR_aws_region: us-east-1
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-        TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-        TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-
     - name: Terraform Init
-      run: |
-        echo "=== Terraform Init ==="
-        echo "Initializing Terraform..."
-        terraform init -no-color
-        echo "Terraform initialized successfully"
-        echo "Terraform version:"
-        terraform version
+      run: terraform init
       working-directory: ./terraform
-      env:
-        TF_VAR_aws_region: us-east-1
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-        TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-        TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
     - name: Terraform Validate
-      run: |
-        echo "=== Terraform Validate ==="
-        terraform validate -no-color
-        echo "Terraform validation completed"
+      run: terraform validate
       working-directory: ./terraform
-      env:
-        TF_VAR_aws_region: us-east-1
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-        TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-        TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
     - name: Terraform Plan
       run: |
-        echo "=== Terraform Plan ==="
-        echo "Planning Terraform deployment..."
-        terraform plan -no-color -detailed-exitcode -out=tfplan
-        echo "Terraform plan completed"
-        echo "Plan summary:"
-        terraform show -no-color tfplan
+        echo "Planning deployment..."
+        terraform plan -detailed-exitcode -out=tfplan
       working-directory: ./terraform
-      env:
-        TF_VAR_aws_region: us-east-1
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-        TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-        TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
     - name: Terraform Apply
       id: terraform
       run: |
-        echo "=== Terraform Apply ==="
-        echo "Applying Terraform configuration..."
-        terraform apply -no-color -auto-approve tfplan
-        echo "Terraform apply completed"
-        echo "Getting outputs..."
-        terraform output -no-color
-        echo "Getting ECR repository URL..."
+        terraform apply -auto-approve tfplan
         ECR_URL=$(terraform output -raw ecr_repository_url)
-        echo "ECR URL: $ECR_URL"
         echo "ecr_repository_url=$ECR_URL" >> $GITHUB_OUTPUT
       working-directory: ./terraform
-      env:
-        TF_VAR_aws_region: us-east-1
-        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-        TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-        TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-        TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
   build-and-deploy:
     needs: infrastructure
@@ -168,67 +103,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Debug Build Environment
-      run: |
-        echo "=== Build Environment ==="
-        echo "ECR_REPOSITORY: $ECR_REPOSITORY"
-        echo "ECS_SERVICE: $ECS_SERVICE"
-        echo "ECS_CLUSTER: $ECS_CLUSTER"
-        echo "CONTAINER_NAME: $CONTAINER_NAME"
-        echo "AWS_REGION: $AWS_REGION"
-        echo "Current directory: $(pwd)"
-        echo "Docker files:"
-        ls -la
-
     - name: Login to Amazon ECR
       id: login-ecr
-      run: |
-        echo "=== ECR Login ==="
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
-        echo "ECR login successful"
+      uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
-        ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        echo "=== Docker Build & Push ==="
-        echo "Building Docker image..."
-        echo "Registry: $ECR_REGISTRY"
-        echo "Repository: $ECR_REPOSITORY"
-        echo "Tag: $IMAGE_TAG"
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        echo "Docker image built successfully"
-        echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "Image pushed successfully"
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Substitute environment variables in task definition
-      run: |
-        echo "=== Task Definition Substitution ==="
-        echo "Substituting environment variables in task definition..."
-        echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
-        echo "AWS_REGION: $AWS_REGION"
-        echo "Original task definition:"
-        cat task-definition.json
-        envsubst < task-definition.json > task-definition-final.json
-        echo "Updated task definition:"
-        cat task-definition-final.json
+      run: envsubst < task-definition.json > task-definition-final.json
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: us-east-1
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
-      run: |
-        echo "=== ECS Task Definition Render ==="
-        echo "Container name: ${{ env.CONTAINER_NAME }}"
-        echo "Image: ${{ steps.build-image.outputs.image }}"
-      
-    - name: Render ECS Task Definition
-      id: task-def-render
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition-final.json
@@ -236,17 +132,9 @@ jobs:
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
-      run: |
-        echo "=== ECS Deployment ==="
-        echo "Deploying to ECS..."
-        echo "Service: ${{ env.ECS_SERVICE }}"
-        echo "Cluster: ${{ env.ECS_CLUSTER }}"
-        echo "Task definition: ${{ steps.task-def-render.outputs.task-definition }}"
-      
-    - name: Deploy to ECS
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: ${{ steps.task-def-render.outputs.task-definition }}
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: ${{ env.ECS_SERVICE }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true

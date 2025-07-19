@@ -16,13 +16,10 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_route53_zone" "main" {
-  name = var.domain_name
-}
-
-data "aws_acm_certificate" "main" {
-  domain   = "*.${var.domain_name}"
-  statuses = ["ISSUED"]
+# Use provided certificate ARN and hosted zone ID
+locals {
+  certificate_arn = var.certificate_arn
+  hosted_zone_id  = var.hosted_zone_id
 }
 
 # ECR Repository
@@ -69,7 +66,7 @@ resource "aws_ecs_service" "main" {
 
 # Route53 Record
 resource "aws_route53_record" "game" {
-  zone_id = data.aws_route53_zone.main.zone_id
+  zone_id = local.hosted_zone_id
   name    = var.subdomain
   type    = "A"
   

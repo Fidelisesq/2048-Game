@@ -25,6 +25,8 @@ Add these secrets to your GitHub repository:
 - `ECS_TASK_DEFINITION` - Task definition name (2048-task-def)
 - `CONTAINER_NAME` - Container name (2048-container)
 - `VPC_ID` - Your existing VPC ID
+- `CERTIFICATE_ARN` - Your ACM certificate ARN
+- `HOSTED_ZONE_ID` - Your Route53 hosted zone ID
 
 ### 2. Prerequisites
 - Route53 hosted zone for `fozdigitalz.com`

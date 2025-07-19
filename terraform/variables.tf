@@ -61,3 +61,13 @@ variable "aws_account_id" {
   description = "AWS Account ID"
   type        = string
 }
+
+variable "certificate_arn" {
+  description = "ACM Certificate ARN"
+  type        = string
+}
+
+variable "hosted_zone_id" {
+  description = "Route53 Hosted Zone ID"
+  type        = string
+}
