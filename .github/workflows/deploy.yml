@@ -79,9 +79,18 @@ jobs:
         TF_LOG: DEBUG
       run: |
         echo "Planning deployment..."
-        terraform plan -detailed-exitcode -out=tfplan
+        terraform plan -detailed-exitcode -out=tfplan || code=$?
+        if [ "$code" -eq 1 ]; then
+         echo "Terraform plan failed"
+         exit 1
+        elif [ "$code" -eq 2 ]; then
+         echo "Terraform plan succeeded with changes"
+        else
+         echo "Terraform plan succeede with no changes"
+        fi
       working-directory: ./terraform
     
+
 
     - name: Terraform Apply
       id: terraform
