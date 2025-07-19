@@ -194,13 +194,38 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/2048-game:$IMAGE_TAG .
+        docker tag $ECR_REGISTRY/2048-game:$IMAGE_TAG $ECR_REGISTRY/2048-game:latest
         docker push $ECR_REGISTRY/2048-game:$IMAGE_TAG
+        docker push $ECR_REGISTRY/2048-game:latest
         echo "image=$ECR_REGISTRY/2048-game:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Update ECS service with new image
+    - name: Update task definition with new image
       run: |
-        # Force new deployment with updated task definition
+        # Get current task definition
+        TASK_DEF=$(aws ecs describe-task-definition --task-definition 2048-task-def --query 'taskDefinition' --output json)
+        
+        # Update image in task definition
+        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ steps.build-image.outputs.image }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+        
+        # Write to file and register new task definition
+        echo $NEW_TASK_DEF > task-def.json
+        aws ecs register-task-definition --cli-input-json file://task-def.json
+        
+        # Update service with new task definition
         aws ecs update-service \
           --cluster 2048-cluster \
           --service 2048-service \
-          --force-new-deployment
+          --task-definition 2048-task-def
+    
+    - name: Check infrastructure health
+      run: |
+        echo "🔍 Checking ECS Service Status..."
+        aws ecs describe-services --cluster 2048-cluster --services 2048-service --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}'
+        
+        echo "🔍 Checking ECS Tasks..."
+        aws ecs list-tasks --cluster 2048-cluster --service-name 2048-service --query 'taskArns[0]' --output text | xargs -I {} aws ecs describe-tasks --cluster 2048-cluster --tasks {} --query 'tasks[0].{LastStatus:lastStatus,HealthStatus:healthStatus}'
+        
+        echo "🔍 Checking Target Group Health..."
+        aws elbv2 describe-target-health --target-group-arn $(aws elbv2 describe-target-groups --names 2048-tg --query 'TargetGroups[0].TargetGroupArn' --output text)
+        
+        echo "🔍 Load Balancer URL: http://2048-alb-2083885299.us-east-1.elb.amazonaws.com"
