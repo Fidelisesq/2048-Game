@@ -133,7 +133,11 @@ jobs:
       run: |
         terraform apply -auto-approve tfplan
         ECR_URL=$(terraform output -raw ecr_repository_url)
+        ALB_URL=$(terraform output -raw load_balancer_dns)
         echo "ecr_repository_url=$ECR_URL" >> $GITHUB_OUTPUT
+        echo "load_balancer_url=$ALB_URL" >> $GITHUB_OUTPUT
+        echo "🎮 Game URL: https://play-2048.fozdigitalz.com"
+        echo "🔗 Direct ALB URL: http://$ALB_URL"
       working-directory: ./terraform
 
   destroy:
