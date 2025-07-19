@@ -17,6 +17,7 @@ env:
   TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
   TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
   TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+  TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
 
 jobs:
   test:
@@ -51,12 +52,23 @@ jobs:
       with:
         terraform_wrapper: false
 
+    - name: Debug Environment Variables
+      run: |
+        echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
+        echo "ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}"
+        echo "ECS_SERVICE: ${{ secrets.ECS_SERVICE }}"
+        echo "ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}"
+        echo "DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}"
+        echo "SUBDOMAIN: ${{ secrets.SUBDOMAIN }}"
+        echo "VPC_ID: ${{ secrets.VPC_ID }}"
+        echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Terraform Init
       run: |
