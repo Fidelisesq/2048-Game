@@ -5,6 +5,16 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Choose action'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+        - deploy
+        - destroy
 
 env:
   AWS_REGION: us-east-1
@@ -40,7 +50,7 @@ jobs:
   infrastructure:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'destroy') && github.event.inputs.action != 'destroy'
     outputs:
       ecr_repository_url: ${{ steps.terraform.outputs.ecr_repository_url }}
     
@@ -126,9 +136,39 @@ jobs:
         echo "ecr_repository_url=$ECR_URL" >> $GITHUB_OUTPUT
       working-directory: ./terraform
 
+  destroy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'destroy')) || github.event.inputs.action == 'destroy'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve
+      working-directory: ./terraform
+
   build-and-deploy:
     needs: infrastructure
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'destroy') && github.event.inputs.action != 'destroy'
     
     steps:
     - name: Checkout
@@ -158,7 +198,7 @@ jobs:
     - name: Update task definition with new image
       run: |
         # Get current task definition
-        TASK_DEF=$(aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} --query 'taskDefinition')
+        TASK_DEF=$(aws ecs describe-task-definition --task-definition 2048-task-def --query 'taskDefinition')
         
         # Update image in task definition
         NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ steps.build-image.outputs.image }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
@@ -168,6 +208,6 @@ jobs:
         
         # Update service
         aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }} \
-          --service ${{ env.ECS_SERVICE }} \
-          --task-definition ${{ env.ECS_TASK_DEFINITION }}:$NEW_REVISION
+          --cluster 2048-cluster \
+          --service 2048-service \
+          --task-definition 2048-task-def:$NEW_REVISION
