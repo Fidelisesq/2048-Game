@@ -41,11 +41,46 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name = "/ecs/${var.ecs_task_definition_name}"
 }
 
+# ECS Task Definition
+resource "aws_ecs_task_definition" "game_task" {
+  family                   = var.ecs_task_definition_name
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  
+  container_definitions = jsonencode([
+    {
+      name  = var.container_name
+      image = "${aws_ecr_repository.game_repo.repository_url}:latest"
+      
+      portMappings = [
+        {
+          containerPort = 80
+          protocol      = "tcp"
+        }
+      ]
+      
+      essential = true
+      
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+}
+
 # ECS Service
 resource "aws_ecs_service" "main" {
   name            = var.ecs_service_name
   cluster         = aws_ecs_cluster.game_cluster.id
-  task_definition = var.ecs_task_definition_name
+  task_definition = aws_ecs_task_definition.game_task.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
   
