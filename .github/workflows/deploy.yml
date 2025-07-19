@@ -75,10 +75,13 @@ jobs:
       working-directory: ./terraform
 
     - name: Terraform Plan
+      env:
+        TF_LOG: DEBUG
       run: |
         echo "Planning deployment..."
         terraform plan -detailed-exitcode -out=tfplan
       working-directory: ./terraform
+    
 
     - name: Terraform Apply
       id: terraform
