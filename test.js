@@ -15,7 +15,13 @@ global.document = {
 
 // Read and evaluate the game script
 const gameScript = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8');
-eval(gameScript.replace('const game = new Game2048();', ''));
+console.log('Script loaded, length:', gameScript.length);
+
+// Remove the instantiation line and eval
+const scriptWithoutInstance = gameScript.replace('const game = new Game2048();', '');
+eval(scriptWithoutInstance);
+
+console.log('Game2048 defined:', typeof Game2048);
 
 // Test game initialization
 const testGame = new Game2048();

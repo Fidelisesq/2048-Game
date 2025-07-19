@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "2048 Game with CI/CD Pipeline",
   "scripts": {
-    "test": "node test.js",
+    "test": "node test-simple.js",
     "start": "python -m http.server 8000"
   },
   "keywords": ["2048", "game", "javascript"],
