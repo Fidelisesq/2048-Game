@@ -93,6 +93,10 @@ jobs:
         if [ "$TG_ARN" != "" ] && [ "$TG_ARN" != "None" ]; then
           terraform import aws_lb_target_group.app $TG_ARN || true
         fi
+        
+        # Import Route53 record if it exists (try both root and subdomain)
+        terraform import aws_route53_record.game ${{ secrets.HOSTED_ZONE_ID }}_play-2048.fozdigitalz.com_A || true
+        terraform import aws_route53_record.game ${{ secrets.HOSTED_ZONE_ID }}_fozdigitalz.com_A || true
       working-directory: ./terraform
       continue-on-error: true
 
