@@ -116,4 +116,8 @@ resource "aws_route53_record" "game" {
     zone_id                = aws_lb.main.zone_id
     evaluate_target_health = true
   }
+  
+  lifecycle {
+    ignore_changes = [name, zone_id]
+  }
 }
