@@ -67,7 +67,9 @@ jobs:
       run: |
         echo "Checking required secrets..."
         echo "DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}"
+        echo "SUBDOMAIN: ${{ secrets.SUBDOMAIN }}"
         echo "VPC_ID: ${{ secrets.VPC_ID }}"
+        echo "Expected record name: ${{ secrets.SUBDOMAIN }}.${{ secrets.DOMAIN_NAME }}"
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
