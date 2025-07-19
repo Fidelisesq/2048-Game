@@ -195,19 +195,10 @@ jobs:
         docker push $ECR_REGISTRY/2048-game:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/2048-game:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Update task definition with new image
+    - name: Update ECS service with new image
       run: |
-        # Get current task definition
-        TASK_DEF=$(aws ecs describe-task-definition --task-definition 2048-task-def --query 'taskDefinition')
-        
-        # Update image in task definition
-        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ steps.build-image.outputs.image }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
-        
-        # Register new task definition
-        NEW_REVISION=$(echo $NEW_TASK_DEF | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query 'taskDefinition.revision')
-        
-        # Update service
+        # Force new deployment with updated task definition
         aws ecs update-service \
           --cluster 2048-cluster \
           --service 2048-service \
-          --task-definition 2048-task-def:$NEW_REVISION
+          --force-new-deployment
