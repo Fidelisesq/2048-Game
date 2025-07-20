@@ -17,3 +17,7 @@ output "website_url" {
   description = "Website URL"
   value       = "https://${var.subdomain}.${var.domain_name}"
 }
+
+output "computed_alias" {
+  value = "${var.subdomain}.${var.domain_name}"
+}
