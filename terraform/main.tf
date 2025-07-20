@@ -8,7 +8,7 @@ terraform {
   
   backend "s3" {
     bucket = "foz-terraform-state-bucket"
-    key    = "2048-game/terraform.tfstate"
+    key    = "2048-game-s3/terraform.tfstate"
     region = "us-east-1"
   }
 }
@@ -17,107 +17,110 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Data sources
-data "aws_availability_zones" "available" {
-  state = "available"
+# S3 Bucket for hosting
+resource "aws_s3_bucket" "game_bucket" {
+  bucket = "${var.subdomain}.${var.domain_name}"
 }
 
-# Use provided certificate ARN and hosted zone ID
-locals {
-  certificate_arn = var.certificate_arn
-  hosted_zone_id  = var.hosted_zone_id
-}
+resource "aws_s3_bucket_website_configuration" "game_bucket_website" {
+  bucket = aws_s3_bucket.game_bucket.id
 
-# ECR Repository
-resource "aws_ecr_repository" "game_repo" {
-  name = var.ecr_repository_name
-  
-  image_scanning_configuration {
-    scan_on_push = true
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
   }
 }
 
-# ECS Cluster
-resource "aws_ecs_cluster" "game_cluster" {
-  name = var.ecs_cluster_name
+resource "aws_s3_bucket_public_access_block" "game_bucket_pab" {
+  bucket = aws_s3_bucket.game_bucket.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "ecs_log_group" {
-  name = "/ecs/${var.ecs_task_definition_name}"
+resource "aws_s3_bucket_policy" "game_bucket_policy" {
+  bucket = aws_s3_bucket.game_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.game_bucket.arn}/*"
+      },
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.game_bucket_pab]
 }
 
-# ECS Task Definition
-resource "aws_ecs_task_definition" "game_task" {
-  family                   = var.ecs_task_definition_name
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  
-  container_definitions = jsonencode([
-    {
-      name  = var.container_name
-      image = "${aws_ecr_repository.game_repo.repository_url}:latest"
-      
-      portMappings = [
-        {
-          containerPort = 80
-          protocol      = "tcp"
-        }
-      ]
-      
-      essential = true
-      
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "ecs"
-        }
+# CloudFront Distribution
+resource "aws_cloudfront_distribution" "game_distribution" {
+  origin {
+    domain_name = aws_s3_bucket_website_configuration.game_bucket_website.website_endpoint
+    origin_id   = "S3-${aws_s3_bucket.game_bucket.bucket}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+
+  aliases = ["${var.subdomain}.${var.domain_name}"]
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.game_bucket.bucket}"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
       }
     }
-  ])
-}
 
-# ECS Service
-resource "aws_ecs_service" "main" {
-  name            = var.ecs_service_name
-  cluster         = aws_ecs_cluster.game_cluster.id
-  task_definition = aws_ecs_task_definition.game_task.arn
-  desired_count   = var.desired_count
-  launch_type     = "FARGATE"
-  
-  network_configuration {
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    subnets          = data.aws_subnets.public.ids
-    assign_public_ip = true
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
   }
-  
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
-    container_name   = var.container_name
-    container_port   = 80
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
   }
-  
-  depends_on = [aws_lb_listener.https]
+
+  viewer_certificate {
+    acm_certificate_arn = var.certificate_arn
+    ssl_support_method  = "sni-only"
+  }
 }
 
 # Route53 Record
 resource "aws_route53_record" "game" {
-  zone_id = local.hosted_zone_id
+  zone_id = var.hosted_zone_id
   name    = var.subdomain
   type    = "A"
-  
+
   alias {
-    name                   = aws_lb.main.dns_name
-    zone_id                = aws_lb.main.zone_id
-    evaluate_target_health = true
-  }
-  
-  lifecycle {
-    ignore_changes = [name, zone_id]
+    name                   = aws_cloudfront_distribution.game_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.game_distribution.hosted_zone_id
+    evaluate_target_health = false
   }
 }

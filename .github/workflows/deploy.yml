@@ -1,10 +1,8 @@
-name: Deploy 2048 Game to AWS ECS
+name: Deploy 2048 Game to S3 + CloudFront
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ cloudfront-hosting ]
   workflow_dispatch:
     inputs:
       action:
@@ -16,229 +14,139 @@ on:
         - deploy
         - destroy
 
-env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
-  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-  ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
-  CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
-  TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-  TF_VAR_subdomain: ${{ secrets.SUBDOMAIN }}
-  TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
-  TF_VAR_aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-  TF_VAR_certificate_arn: ${{ secrets.CERTIFICATE_ARN }}
-  TF_VAR_hosted_zone_id: ${{ secrets.HOSTED_ZONE_ID }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-    
     - name: Run tests
-      run: |
-        echo "Running tests..."
-        npm test
-        echo "Tests completed successfully"
+      run: npm test
 
   infrastructure:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'destroy') && github.event.inputs.action != 'destroy'
-    outputs:
-      ecr_repository_url: ${{ steps.terraform.outputs.ecr_repository_url }}
-    
+    if: (github.event.inputs.action != 'destroy' || github.event_name == 'push') && !contains(github.event.head_commit.message, 'destroy')
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-
+    
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_wrapper: false
-
-    - name: Debug Secrets
-      run: |
-        echo "Checking required secrets..."
-        echo "DOMAIN_NAME: '${{ secrets.DOMAIN_NAME }}'"
-        echo "SUBDOMAIN: '${{ secrets.SUBDOMAIN }}'"
-        echo "VPC_ID: '${{ secrets.VPC_ID }}'"
-        echo "Expected record name: '${{ secrets.SUBDOMAIN }}.${{ secrets.DOMAIN_NAME }}'"
-        echo "Length DOMAIN_NAME: ${#TF_VAR_domain_name}"
-        echo "Length SUBDOMAIN: ${#TF_VAR_subdomain}"
-
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-
+    
+    - name: Create terraform.tfvars
+      run: |
+        cat > terraform/terraform.tfvars << EOF
+        aws_region = "${{ secrets.AWS_REGION }}"
+        domain_name = "${{ secrets.DOMAIN_NAME }}"
+        subdomain = "${{ secrets.SUBDOMAIN }}"
+        certificate_arn = "${{ secrets.CERTIFICATE_ARN }}"
+        hosted_zone_id = "${{ secrets.HOSTED_ZONE_ID }}"
+        EOF
+    
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
-
-    - name: Terraform Validate
-      run: terraform validate
-      working-directory: ./terraform
-
-    - name: Import existing resources
-      run: |
-        # Import existing resources if they exist
-        terraform import aws_iam_role.ecs_task_execution_role ecsTaskExecutionRole-2048 || true
-        terraform import aws_ecr_repository.game_repo 2048-game || true
-        terraform import aws_ecs_cluster.game_cluster 2048-cluster || true
-        terraform import aws_cloudwatch_log_group.ecs_log_group /ecs/2048-task-def || true
-        
-        # Get ALB ARN and import
-        ALB_ARN=$(aws elbv2 describe-load-balancers --names 2048-alb --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || echo "")
-        if [ "$ALB_ARN" != "" ] && [ "$ALB_ARN" != "None" ]; then
-          terraform import aws_lb.main $ALB_ARN || true
-        fi
-        
-        # Get Target Group ARN and import
-        TG_ARN=$(aws elbv2 describe-target-groups --names 2048-tg --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
-        if [ "$TG_ARN" != "" ] && [ "$TG_ARN" != "None" ]; then
-          terraform import aws_lb_target_group.app $TG_ARN || true
-        fi
-        
-        # Remove incorrect Route53 record from state if it exists
-        terraform state rm aws_route53_record.game || true
-      working-directory: ./terraform
-      continue-on-error: true
-
+    
     - name: Terraform Plan
-      env:
-        TF_LOG: DEBUG
-      run: |
-        echo "Planning deployment..."
-        terraform plan -detailed-exitcode -out=tfplan || code=$?
-        if [ "$code" -eq 1 ]; then
-         echo "Terraform plan failed"
-         exit 1
-        elif [ "$code" -eq 2 ]; then
-         echo "Terraform plan succeeded with changes"
-        else
-         echo "Terraform plan succeede with no changes"
-        fi
+      run: terraform plan -out=tfplan
       working-directory: ./terraform
     
-
-
     - name: Terraform Apply
-      id: terraform
-      run: |
-        terraform apply -auto-approve tfplan
-        ECR_URL=$(terraform output -raw ecr_repository_url)
-        ALB_URL=$(terraform output -raw load_balancer_dns)
-        echo "ecr_repository_url=$ECR_URL" >> $GITHUB_OUTPUT
-        echo "load_balancer_url=$ALB_URL" >> $GITHUB_OUTPUT
-        echo "Game URL: https://play-2048.fozdigitalz.com"
-        
-        # Verify Route53 record creation
-        echo "Checking Route53 records..."
-        aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.HOSTED_ZONE_ID }} --query 'ResourceRecordSets[?Type==`A`].[Name,Type,AliasTarget.DNSName]' --output table
+      run: terraform apply -auto-approve tfplan
       working-directory: ./terraform
+    
+    - name: Get Terraform Outputs
+      id: terraform-outputs
+      run: |
+        echo "s3_bucket=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
+        echo "cloudfront_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
+      working-directory: ./terraform
+    
+    outputs:
+      s3_bucket: ${{ steps.terraform-outputs.outputs.s3_bucket }}
+      cloudfront_id: ${{ steps.terraform-outputs.outputs.cloudfront_id }}
+
+  deploy:
+    needs: infrastructure
+    runs-on: ubuntu-latest
+    if: (github.event.inputs.action != 'destroy' || github.event_name == 'push') && !contains(github.event.head_commit.message, 'destroy')
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Upload files to S3
+      run: |
+        aws s3 sync . s3://${{ needs.infrastructure.outputs.s3_bucket }}/ \
+          --exclude ".git/*" \
+          --exclude ".github/*" \
+          --exclude "terraform/*" \
+
+          --exclude "Dockerfile" \
+          --exclude "*.md" \
+          --exclude "package.json" \
+          --exclude "test.js" \
+          --exclude "node_modules/*"
+    
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ needs.infrastructure.outputs.cloudfront_id }} \
+          --paths "/*"
 
   destroy:
     needs: test
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'destroy')) || github.event.inputs.action == 'destroy'
-    
+    if: github.event.inputs.action == 'destroy' || contains(github.event.head_commit.message, 'destroy')
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-
+    
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_wrapper: false
-
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-
+    
+    - name: Create terraform.tfvars
+      run: |
+        cat > terraform/terraform.tfvars << EOF
+        aws_region = "${{ secrets.AWS_REGION }}"
+        domain_name = "${{ secrets.DOMAIN_NAME }}"
+        subdomain = "${{ secrets.SUBDOMAIN }}"
+        certificate_arn = "${{ secrets.CERTIFICATE_ARN }}"
+        hosted_zone_id = "${{ secrets.HOSTED_ZONE_ID }}"
+        EOF
+    
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
-
+    
     - name: Terraform Destroy
       run: terraform destroy -auto-approve
       working-directory: ./terraform
-
-  build-and-deploy:
-    needs: infrastructure
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'destroy') && github.event.inputs.action != 'destroy'
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/2048-game:$IMAGE_TAG .
-        docker tag $ECR_REGISTRY/2048-game:$IMAGE_TAG $ECR_REGISTRY/2048-game:latest
-        docker push $ECR_REGISTRY/2048-game:$IMAGE_TAG
-        docker push $ECR_REGISTRY/2048-game:latest
-        echo "image=$ECR_REGISTRY/2048-game:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Update task definition with new image
-      run: |
-        # Get current task definition
-        TASK_DEF=$(aws ecs describe-task-definition --task-definition 2048-task-def --query 'taskDefinition' --output json)
-        
-        # Update image in task definition
-        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ steps.build-image.outputs.image }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
-        
-        # Write to file and register new task definition
-        echo $NEW_TASK_DEF > task-def.json
-        aws ecs register-task-definition --cli-input-json file://task-def.json
-        
-        # Update service with new task definition
-        aws ecs update-service \
-          --cluster 2048-cluster \
-          --service 2048-service \
-          --task-definition 2048-task-def
-    
-    - name: Check infrastructure health
-      run: |
-        echo "🔍 Checking ECS Service Status..."
-        aws ecs describe-services --cluster 2048-cluster --services 2048-service --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}'
-        
-        echo "🔍 Checking ECS Tasks..."
-        TASK_ARN=$(aws ecs list-tasks --cluster 2048-cluster --service-name 2048-service --query 'taskArns[0]' --output text)
-        if [ "$TASK_ARN" != "None" ] && [ "$TASK_ARN" != "" ]; then
-          aws ecs describe-tasks --cluster 2048-cluster --tasks $TASK_ARN --query 'tasks[0].{LastStatus:lastStatus,HealthStatus:healthStatus}'
-        else
-          echo "No tasks running"
-        fi
-        
-        echo "🔍 Checking Target Group Health..."
-        aws elbv2 describe-target-health --target-group-arn $(aws elbv2 describe-target-groups --names 2048-tg --query 'TargetGroups[0].TargetGroupArn' --output text)
-        
-        echo "🔍 Load Balancer URL: http://2048-alb-2083885299.us-east-1.elb.amazonaws.com"
