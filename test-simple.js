@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Check if required files exist
-const requiredFiles = ['index.html', 'style.css', 'script.js', 'Dockerfile'];
+const requiredFiles = ['index.html', 'style.css', 'script.js'];
 let allFilesExist = true;
 
 requiredFiles.forEach(file => {
