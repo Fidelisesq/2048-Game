@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
   
   backend "s3" {
@@ -21,7 +25,11 @@ provider "aws" {
 
 # S3 Bucket for hosting
 resource "aws_s3_bucket" "game_bucket" {
-  bucket = "${var.subdomain}.${var.domain_name}"
+  bucket = "2048-game-${random_id.bucket_suffix.hex}"
+}
+
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
 }
 
 resource "aws_s3_bucket_website_configuration" "game_bucket_website" {
