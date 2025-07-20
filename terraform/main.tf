@@ -17,10 +17,9 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Validate certificate by domain
+# Use certificate directly by ARN
 data "aws_acm_certificate" "game_cert" {
-  domain   = "*.${var.domain_name}"
-  statuses = ["ISSUED"]
+  arn = var.certificate_arn
 }
 
 # S3 Bucket for hosting
