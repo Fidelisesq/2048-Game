@@ -3,6 +3,7 @@ class Game2048 {
         this.grid = [];
         this.score = 0;
         this.size = 4;
+        this.hasWon = false;
         this.init();
         this.bindEvents();
     }
@@ -10,6 +11,7 @@ class Game2048 {
     init() {
         this.grid = Array(this.size).fill().map(() => Array(this.size).fill(0));
         this.score = 0;
+        this.hasWon = false;
         this.updateScore();
         this.addRandomTile();
         this.addRandomTile();
@@ -89,8 +91,9 @@ class Game2048 {
         if (moved) {
             this.grid = newGrid;
             
-            // Check for win
-            if (this.checkWin()) {
+            // Check for win (only show once)
+            if (!this.hasWon && this.checkWin()) {
+                this.hasWon = true;
                 setTimeout(() => {
                     if (confirm('You won! Reached 2048! Continue playing?')) {
                         // Continue playing
