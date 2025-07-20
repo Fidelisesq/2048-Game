@@ -9,11 +9,6 @@ output "certificate_status" {
   value       = data.aws_acm_certificate.game_cert.status
 }
 
-output "certificate_subject_alternative_names" {
-  description = "Certificate SANs"
-  value       = data.aws_acm_certificate.game_cert.subject_alternative_names
-}
-
 output "target_domain" {
   description = "Target domain we're trying to use"
   value       = "${var.subdomain}.${var.domain_name}"
