@@ -180,18 +180,29 @@ class Game2048 {
             const diffX = startX - endX;
             const diffY = startY - endY;
             
+            let moveAttempted = false;
             if (Math.abs(diffX) > Math.abs(diffY)) {
                 // Horizontal swipe
                 if (Math.abs(diffX) > 30) {
                     this.addSwipeEffect();
                     this.move(diffX > 0 ? 'left' : 'right');
+                    moveAttempted = true;
                 }
             } else {
                 // Vertical swipe
                 if (Math.abs(diffY) > 30) {
                     this.addSwipeEffect();
                     this.move(diffY > 0 ? 'up' : 'down');
+                    moveAttempted = true;
                 }
+            }
+            
+            // Check for game over on mobile even if no move was attempted
+            if (!moveAttempted && this.checkLoss()) {
+                setTimeout(() => {
+                    alert('Game Over! No more moves available.');
+                    this.restart();
+                }, 100);
             }
             
             startX = startY = null;
