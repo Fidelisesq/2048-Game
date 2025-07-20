@@ -17,6 +17,12 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Validate certificate by domain
+data "aws_acm_certificate" "game_cert" {
+  domain   = "*.${var.domain_name}"
+  statuses = ["ISSUED"]
+}
+
 # S3 Bucket for hosting
 resource "aws_s3_bucket" "game_bucket" {
   bucket = "${var.subdomain}.${var.domain_name}"
@@ -107,7 +113,7 @@ resource "aws_cloudfront_distribution" "game_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.certificate_arn
+    acm_certificate_arn      = data.aws_acm_certificate.game_cert.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
