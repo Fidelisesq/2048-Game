@@ -16,12 +16,3 @@ variable "subdomain" {
   default     = "play-2048"
 }
 
-variable "certificate_arn" {
-  description = "ACM Certificate ARN"
-  type        = string
-}
-
-variable "hosted_zone_id" {
-  description = "Route53 Hosted Zone ID"
-  type        = string
-}

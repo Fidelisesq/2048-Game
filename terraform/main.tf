@@ -82,8 +82,6 @@ resource "aws_cloudfront_distribution" "game_distribution" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  aliases = ["${var.subdomain}.${var.domain_name}"]
-
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
@@ -109,21 +107,6 @@ resource "aws_cloudfront_distribution" "game_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
-  }
-}
-
-# Route53 Record
-resource "aws_route53_record" "game" {
-  zone_id = var.hosted_zone_id
-  name    = var.subdomain
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.game_distribution.domain_name
-    zone_id                = aws_cloudfront_distribution.game_distribution.hosted_zone_id
-    evaluate_target_health = false
+    cloudfront_default_certificate = true
   }
 }

@@ -15,7 +15,7 @@ output "cloudfront_domain_name" {
 
 output "website_url" {
   description = "Website URL"
-  value       = "https://${var.subdomain}.${var.domain_name}"
+  value       = "https://${aws_cloudfront_distribution.game_distribution.domain_name}"
 }
 
 output "computed_alias" {

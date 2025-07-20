@@ -52,8 +52,6 @@ jobs:
         aws_region = "${{ secrets.AWS_REGION }}"
         domain_name = "${{ secrets.DOMAIN_NAME }}"
         subdomain = "${{ secrets.SUBDOMAIN }}"
-        certificate_arn = "${{ secrets.CERTIFICATE_ARN }}"
-        hosted_zone_id = "${{ secrets.HOSTED_ZONE_ID }}"
         EOF
     
     - name: Terraform Init
@@ -100,7 +98,6 @@ jobs:
           --exclude ".git/*" \
           --exclude ".github/*" \
           --exclude "terraform/*" \
-
           --exclude "Dockerfile" \
           --exclude "*.md" \
           --exclude "package.json" \
@@ -139,8 +136,6 @@ jobs:
         aws_region = "${{ secrets.AWS_REGION }}"
         domain_name = "${{ secrets.DOMAIN_NAME }}"
         subdomain = "${{ secrets.SUBDOMAIN }}"
-        certificate_arn = "${{ secrets.CERTIFICATE_ARN }}"
-        hosted_zone_id = "${{ secrets.HOSTED_ZONE_ID }}"
         EOF
     
     - name: Terraform Init
