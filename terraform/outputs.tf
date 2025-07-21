@@ -12,3 +12,13 @@ output "s3_bucket_name" {
   description = "S3 bucket name"
   value       = aws_s3_bucket.game_bucket.bucket
 }
+
+output "certificate_details" {
+  description = "Certificate validation details"
+  value = {
+    arn    = data.aws_acm_certificate.domain_cert_validation.arn
+    domain = data.aws_acm_certificate.domain_cert_validation.domain
+    sans   = data.aws_acm_certificate.domain_cert_validation.subject_alternative_names
+    status = data.aws_acm_certificate.domain_cert_validation.status
+  }
+}

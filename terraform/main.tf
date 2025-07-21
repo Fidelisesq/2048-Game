@@ -128,6 +128,11 @@ resource "aws_cloudfront_distribution" "game_distribution" {
   }
 }
 
+# Data source to validate certificate
+data "aws_acm_certificate" "domain_cert_validation" {
+  arn = var.certificate_arn
+}
+
 # Route53 A record for custom domain
 resource "aws_route53_record" "game_domain" {
   zone_id = var.hosted_zone_id
