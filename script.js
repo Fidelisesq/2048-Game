@@ -4,18 +4,24 @@ class Game2048 {
         this.score = 0;
         this.size = 4;
         this.hasWon = false;
+        this.highScore = this.loadHighScore();
+        this.currentTheme = this.loadTheme();
         this.init();
         this.bindEvents();
+        this.applyTheme();
     }
 
     init() {
         this.grid = Array(this.size).fill().map(() => Array(this.size).fill(0));
         this.score = 0;
         this.hasWon = false;
+        this.moveCount = 0;
+        this.startTime = Date.now();
         this.updateScore();
         this.addRandomTile();
         this.addRandomTile();
         this.updateDisplay();
+        this.trackEvent('game_start');
     }
 
     addRandomTile() {
@@ -53,6 +59,12 @@ class Game2048 {
 
     updateScore() {
         document.getElementById('score').textContent = this.score;
+        document.getElementById('high-score').textContent = this.highScore;
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.saveHighScore();
+            document.getElementById('high-score').textContent = this.highScore;
+        }
     }
 
     move(direction) {
@@ -90,10 +102,12 @@ class Game2048 {
 
         if (moved) {
             this.grid = newGrid;
+            this.moveCount++;
             
             // Check for win (only show once)
             if (!this.hasWon && this.checkWin()) {
                 this.hasWon = true;
+                this.trackEvent('game_win', { score: this.score, moves: this.moveCount });
                 setTimeout(() => {
                     if (confirm('You won! Reached 2048! Continue playing?')) {
                         // Continue playing
@@ -110,6 +124,11 @@ class Game2048 {
         
         // Always check for loss after any move attempt
         if (this.checkLoss()) {
+            this.trackEvent('game_over', { 
+                score: this.score, 
+                moves: this.moveCount,
+                duration: Math.round((Date.now() - this.startTime) / 1000)
+            });
             setTimeout(() => {
                 alert('Game Over! No more moves available.');
                 this.restart();
@@ -263,6 +282,128 @@ class Game2048 {
             }
         }
         return true;
+    }
+
+    loadHighScore() {
+        return parseInt(localStorage.getItem('2048-highscore') || '0');
+    }
+
+    saveHighScore() {
+        localStorage.setItem('2048-highscore', this.highScore.toString());
+    }
+
+    shareScore() {
+        const text = `I scored ${this.score} points in 2048! Can you beat it?`;
+        if (navigator.share) {
+            navigator.share({
+                title: '2048 Game',
+                text: text,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(`${text} ${window.location.href}`);
+            alert('Score copied to clipboard!');
+        }
+    }
+
+    loadTheme() {
+        return localStorage.getItem('2048-theme') || 'default';
+    }
+
+    saveTheme() {
+        localStorage.setItem('2048-theme', this.currentTheme);
+    }
+
+    toggleTheme() {
+        const themes = ['default', 'theme-dark', 'theme-neon'];
+        const currentIndex = themes.indexOf(this.currentTheme);
+        this.currentTheme = themes[(currentIndex + 1) % themes.length];
+        this.saveTheme();
+        this.applyTheme();
+    }
+
+    applyTheme() {
+        document.body.className = this.currentTheme === 'default' ? '' : this.currentTheme;
+    }
+
+    trackEvent(eventName, parameters = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, parameters);
+        }
+    }
+
+    async toggleLeaderboard() {
+        const leaderboard = document.getElementById('leaderboard');
+        if (leaderboard.classList.contains('hidden')) {
+            leaderboard.classList.remove('hidden');
+            await this.loadLeaderboard();
+        } else {
+            leaderboard.classList.add('hidden');
+        }
+    }
+
+    async loadLeaderboard() {
+        const listElement = document.getElementById('leaderboard-list');
+        listElement.innerHTML = 'Loading...';
+        
+        try {
+            // Replace with your actual API Gateway URL after deployment
+            const response = await fetch('API_GATEWAY_URL/leaderboard');
+            const scores = await response.json();
+            
+            if (scores.length === 0) {
+                listElement.innerHTML = '<p>No scores yet. Be the first!</p>';
+                return;
+            }
+            
+            listElement.innerHTML = scores.map((score, index) => 
+                `<div class="leaderboard-entry">
+                    <span>#${index + 1} ${score.playerName}</span>
+                    <span>${score.score.toLocaleString()}</span>
+                </div>`
+            ).join('');
+        } catch (error) {
+            listElement.innerHTML = '<p>Failed to load leaderboard</p>';
+            console.error('Leaderboard error:', error);
+        }
+    }
+
+    async submitScore() {
+        const playerName = document.getElementById('player-name').value.trim();
+        if (!playerName) {
+            alert('Please enter your name');
+            return;
+        }
+        
+        if (this.score === 0) {
+            alert('Play a game first!');
+            return;
+        }
+        
+        try {
+            // Replace with your actual API Gateway URL after deployment
+            const response = await fetch('API_GATEWAY_URL/score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    playerName,
+                    score: this.score
+                })
+            });
+            
+            if (response.ok) {
+                alert('Score submitted successfully!');
+                document.getElementById('player-name').value = '';
+                await this.loadLeaderboard();
+            } else {
+                alert('Failed to submit score');
+            }
+        } catch (error) {
+            alert('Failed to submit score');
+            console.error('Submit score error:', error);
+        }
     }
 
     restart() {

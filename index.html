@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>2048 Game</title>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
 </head>
 <body>
     <div class="container">
@@ -14,6 +22,10 @@
                 <div class="score-box">
                     <div class="score-label">SCORE</div>
                     <div id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">BEST</div>
+                    <div id="high-score">0</div>
                 </div>
             </div>
         </div>
@@ -49,7 +61,21 @@
         <p class="game-explanation">
             <strong>HOW TO PLAY:</strong> Use arrow keys on PC or swipe on mobile to move tiles. When two tiles with the same number touch, they merge into one!
         </p>
-        <button class="restart-button" onclick="game.restart()">New Game</button>
+        <div class="button-container">
+            <button class="restart-button" onclick="game.restart()">New Game</button>
+            <button class="share-button" onclick="game.shareScore()">Share Score</button>
+            <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
+            <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
+        </div>
+        
+        <div id="leaderboard" class="leaderboard hidden">
+            <h3>🏆 Global Leaderboard</h3>
+            <div id="leaderboard-list">Loading...</div>
+            <div class="submit-score">
+                <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+                <button onclick="game.submitScore()">Submit Score</button>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

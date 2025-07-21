@@ -106,6 +106,12 @@ resource "aws_cloudfront_distribution" "game_distribution" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+
+    lambda_function_association {
+      event_type   = "origin-response"
+      lambda_arn   = aws_lambda_function.security_headers.qualified_arn
+      include_body = false
+    }
   }
 
   restrictions {

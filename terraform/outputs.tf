@@ -18,6 +18,11 @@ output "website_url" {
   value       = "https://${aws_cloudfront_distribution.game_distribution.domain_name}"
 }
 
+output "api_gateway_url" {
+  description = "API Gateway URL for leaderboard"
+  value       = aws_apigatewayv2_stage.api_stage.invoke_url
+}
+
 output "computed_alias" {
   value = "${var.subdomain}.${var.domain_name}"
 }

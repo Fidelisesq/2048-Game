@@ -1,9 +1,18 @@
+:root {
+    --bg-color: #faf8ef;
+    --text-color: #776e65;
+    --grid-bg: #bbada0;
+    --cell-bg: rgba(238, 228, 218, 0.35);
+    --tile-bg: #eee4da;
+}
+
 body {
     font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background: #faf8ef;
-    color: #776e65;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
 }
 
 .container {
@@ -51,7 +60,7 @@ body {
 
 .game-container {
     position: relative;
-    background: #bbada0;
+    background: var(--grid-bg);
     border-radius: 6px;
     width: 500px;
     height: 500px;
@@ -77,7 +86,7 @@ body {
 .grid-cell {
     width: 107px;
     height: 107px;
-    background: rgba(238, 228, 218, 0.35);
+    background: var(--cell-bg);
     border-radius: 3px;
     margin-right: 10px;
 }
@@ -95,7 +104,7 @@ body {
     position: absolute;
     width: 107px;
     height: 107px;
-    background: #eee4da;
+    background: var(--tile-bg);
     border-radius: 3px;
     font-weight: bold;
     text-align: center;
@@ -130,6 +139,107 @@ body {
     font-size: 18px;
     cursor: pointer;
     margin-top: 20px;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.restart-button, .share-button, .theme-button, .leaderboard-button {
+    background: #8f7a66;
+    color: #f9f6f2;
+    border: none;
+    border-radius: 3px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.restart-button:hover, .share-button:hover, .theme-button:hover, .leaderboard-button:hover {
+    background: #9f8a76;
+}
+
+.leaderboard {
+    margin-top: 30px;
+    background: var(--tile-bg);
+    border-radius: 6px;
+    padding: 20px;
+    max-width: 500px;
+    transition: all 0.3s ease;
+}
+
+.leaderboard.hidden {
+    display: none;
+}
+
+.leaderboard h3 {
+    margin-top: 0;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.leaderboard-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: var(--cell-bg);
+    border-radius: 3px;
+}
+
+.submit-score {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.submit-score input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--grid-bg);
+    border-radius: 3px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.submit-score button {
+    background: #8f7a66;
+    color: #f9f6f2;
+    border: none;
+    border-radius: 3px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.submit-score button:hover {
+    background: #9f8a76;
+}
+
+/* Dark Theme */
+body.theme-dark {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --grid-bg: #2d2d2d;
+    --cell-bg: rgba(255, 255, 255, 0.1);
+    --tile-bg: #3d3d3d;
+}
+
+/* Neon Theme */
+body.theme-neon {
+    --bg-color: #000011;
+    --text-color: #00ffff;
+    --grid-bg: #001122;
+    --cell-bg: rgba(0, 255, 255, 0.1);
+    --tile-bg: #002244;
+}
+
+body.theme-neon .tile {
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    color: #00ffff;
 }
 
 .restart-button:hover {
