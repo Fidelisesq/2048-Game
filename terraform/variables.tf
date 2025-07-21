@@ -22,3 +22,8 @@ variable "hosted_zone_id" {
   description = "Route53 hosted zone ID for fozdigitalz.com"
   type        = string
 }
+
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN for *.fozdigitalz.com"
+  type        = string
+}
