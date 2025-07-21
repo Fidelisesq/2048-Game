@@ -348,7 +348,7 @@ class Game2048 {
         
         try {
             // Replace with your actual API Gateway URL after deployment
-            const response = await fetch('API_GATEWAY_URL/leaderboard');
+            const response = await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/leaderboard');
             const scores = await response.json();
             
             if (scores.length === 0) {
@@ -382,7 +382,7 @@ class Game2048 {
         
         try {
             // Replace with your actual API Gateway URL after deployment
-            const response = await fetch('API_GATEWAY_URL/score', {
+            const response = await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/score', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
