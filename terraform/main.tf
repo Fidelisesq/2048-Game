@@ -123,9 +123,15 @@ resource "aws_cloudfront_distribution" "game_distribution" {
   aliases = ["${var.subdomain}.${var.domain_name}"]
 
   viewer_certificate {
-    acm_certificate_arn = aws_acm_certificate_validation.domain_cert.certificate_arn
+    acm_certificate_arn = data.aws_acm_certificate.existing_cert.arn
     ssl_support_method  = "sni-only"
   }
+}
+
+# Data source for existing certificate
+data "aws_acm_certificate" "existing_cert" {
+  domain   = "*.${var.domain_name}"
+  statuses = ["ISSUED"]
 }
 
 # Route53 A record for custom domain
