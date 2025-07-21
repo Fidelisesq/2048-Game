@@ -120,7 +120,23 @@ resource "aws_cloudfront_distribution" "game_distribution" {
     }
   }
 
+  aliases = ["${var.subdomain}.${var.domain_name}"]
+
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn = var.certificate_arn
+    ssl_support_method  = "sni-only"
+  }
+}
+
+# Route53 A record for custom domain
+resource "aws_route53_record" "game_domain" {
+  zone_id = var.hosted_zone_id
+  name    = "${var.subdomain}.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.game_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.game_distribution.hosted_zone_id
+    evaluate_target_health = false
   }
 }

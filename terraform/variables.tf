@@ -16,3 +16,12 @@ variable "subdomain" {
   default     = "play-2048"
 }
 
+variable "certificate_arn" {
+  description = "ACM certificate ARN for *.fozdigitalz.com"
+  type        = string
+}
+
+variable "hosted_zone_id" {
+  description = "Route53 hosted zone ID for fozdigitalz.com"
+  type        = string
+}

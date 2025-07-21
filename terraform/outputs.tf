@@ -1,6 +1,6 @@
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket"
-  value       = aws_s3_bucket.game_bucket.bucket
+output "website_url" {
+  description = "URL of the 2048 game website"
+  value       = "https://${var.subdomain}.${var.domain_name}"
 }
 
 output "cloudfront_distribution_id" {
@@ -8,21 +8,7 @@ output "cloudfront_distribution_id" {
   value       = aws_cloudfront_distribution.game_distribution.id
 }
 
-output "cloudfront_domain_name" {
-  description = "CloudFront Distribution Domain Name"
-  value       = aws_cloudfront_distribution.game_distribution.domain_name
-}
-
-output "website_url" {
-  description = "Website URL"
-  value       = "https://${aws_cloudfront_distribution.game_distribution.domain_name}"
-}
-
-output "api_gateway_url" {
-  description = "API Gateway URL for leaderboard"
-  value       = aws_apigatewayv2_stage.api_stage.invoke_url
-}
-
-output "computed_alias" {
-  value = "${var.subdomain}.${var.domain_name}"
+output "s3_bucket_name" {
+  description = "S3 bucket name"
+  value       = aws_s3_bucket.game_bucket.bucket
 }
