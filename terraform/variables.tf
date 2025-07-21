@@ -13,7 +13,7 @@ variable "domain_name" {
 variable "subdomain" {
   description = "Subdomain for the game"
   type        = string
-  default     = "play-2048"
+  default     = "play2048"
 }
 
 
