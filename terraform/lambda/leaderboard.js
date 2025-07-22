@@ -9,17 +9,18 @@ exports.handler = async (event) => {
     };
 
     try {
-        const { httpMethod, path, rawPath, routeKey } = event;
-        const actualPath = rawPath || path || routeKey;
+        // Handle both API Gateway v1 and v2 formats
+        const httpMethod = event.httpMethod || event.requestContext?.http?.method;
+        const path = event.path || event.rawPath || event.routeKey;
         
         console.log('Event:', JSON.stringify(event, null, 2));
-        console.log('Method:', httpMethod, 'Path:', actualPath);
+        console.log('Method:', httpMethod, 'Path:', path);
 
         if (httpMethod === 'OPTIONS') {
             return { statusCode: 200, headers };
         }
 
-        if (httpMethod === 'GET' && (actualPath === '/leaderboard' || actualPath?.endsWith('/leaderboard'))) {
+        if (httpMethod === 'GET' && (path === '/leaderboard' || path?.endsWith('/leaderboard'))) {
             // Get top 10 scores
             const params = {
                 TableName: '2048-leaderboard',
@@ -40,10 +41,13 @@ exports.handler = async (event) => {
             };
         }
 
-        if (httpMethod === 'POST' && (actualPath === '/score' || actualPath?.endsWith('/score'))) {
+        if (httpMethod === 'POST' && (path === '/score' || path?.endsWith('/score'))) {
             // Submit new score
-            const body = JSON.parse(event.body);
+            const requestBody = event.body || '{}';
+            const body = JSON.parse(requestBody);
             const { playerName, score } = body;
+
+            console.log('Parsed body:', body);
 
             if (!playerName || !score) {
                 return {
@@ -56,14 +60,15 @@ exports.handler = async (event) => {
             const params = {
                 TableName: '2048-leaderboard',
                 Item: {
-                    id: Date.now() + '-' + Math.random(),
-                    playerName,
+                    id: `${Date.now()}-${Math.random()}`,
+                    playerName: playerName.toString(),
                     score: parseInt(score),
                     game_type: 'classic',
                     timestamp: new Date().toISOString()
                 }
             };
 
+            console.log('DynamoDB params:', params);
             await dynamodb.put(params).promise();
             return {
                 statusCode: 201,
