@@ -13,11 +13,19 @@ body {
     background: var(--bg-color);
     color: var(--text-color);
     transition: all 0.3s ease;
+    overflow-x: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
 .container {
     max-width: 500px;
     margin: 0 auto;
+    overflow-y: auto;
+    height: 100vh;
+    padding-bottom: 20px;
+    box-sizing: border-box;
 }
 
 .heading {
@@ -148,7 +156,7 @@ body {
     justify-content: center;
 }
 
-.restart-button, .share-button, .theme-button, .leaderboard-button {
+.restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
     background: #8f7a66;
     color: #f9f6f2;
     border: none;
@@ -159,8 +167,12 @@ body {
     transition: background 0.2s;
 }
 
-.restart-button:hover, .share-button:hover, .theme-button:hover, .leaderboard-button:hover {
+.restart-button:hover, .share-button:hover, .theme-button:hover, .sound-button:hover, .leaderboard-button:hover {
     background: #9f8a76;
+}
+
+.sound-button.muted {
+    opacity: 0.5;
 }
 
 .leaderboard {
@@ -265,5 +277,90 @@ body.theme-neon .tile {
     100% {
         transform: scale(3);
         opacity: 0;
+    }
+}
+
+.milestone-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.milestone-popup.hidden {
+    display: none;
+}
+
+.milestone-content {
+    background: var(--bg-color);
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 300px;
+    animation: milestone-bounce 0.5s ease-out;
+}
+
+.milestone-content h2 {
+    margin-top: 0;
+    color: var(--text-color);
+    font-size: 24px;
+}
+
+#milestone-tile {
+    width: 80px;
+    height: 80px;
+    background: #f67c5f;
+    color: #f9f6f2;
+    border-radius: 6px;
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.milestone-content p {
+    color: var(--text-color);
+    font-size: 18px;
+    margin: 20px 0;
+}
+
+.milestone-content button {
+    background: #8f7a66;
+    color: #f9f6f2;
+    border: none;
+    border-radius: 3px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.milestone-content button:hover {
+    background: #9f8a76;
+}
+
+@keyframes milestone-bounce {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
     }
 }

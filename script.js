@@ -6,9 +6,14 @@ class Game2048 {
         this.hasWon = false;
         this.highScore = this.loadHighScore();
         this.currentTheme = this.loadTheme();
+        this.soundEnabled = this.loadSoundSetting();
+        this.achievedMilestones = new Set();
+        this.milestones = [128, 256, 512, 1024, 2048];
         this.init();
         this.bindEvents();
         this.applyTheme();
+        this.updateSoundButton();
+        this.initAudio();
     }
 
     init() {
@@ -36,6 +41,9 @@ class Game2048 {
         if (emptyCells.length > 0) {
             const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             this.grid[randomCell.x][randomCell.y] = Math.random() < 0.9 ? 2 : 4;
+            
+            // Play tile placement sound
+            this.playSound(220, 60);
         }
     }
 
@@ -111,6 +119,13 @@ class Game2048 {
             this.grid = newGrid;
             this.moveCount++;
             
+            this.addRandomTile();
+            this.updateDisplay();
+            this.updateScore();
+            
+            // Check milestones after updating display
+            this.checkMilestones();
+            
             // Check for win (only show once)
             if (!this.hasWon && this.checkWin()) {
                 this.hasWon = true;
@@ -123,10 +138,6 @@ class Game2048 {
                     }
                 }, 100);
             }
-            
-            this.addRandomTile();
-            this.updateDisplay();
-            this.updateScore();
         }
         
         // Always check for loss after any move attempt
@@ -147,16 +158,24 @@ class Game2048 {
         const filtered = line.filter(val => val !== 0);
         const merged = [];
         let i = 0;
+        let hasMerged = false;
         
         while (i < filtered.length) {
             if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
-                merged.push(filtered[i] * 2);
-                this.score += filtered[i] * 2;
+                const mergedValue = filtered[i] * 2;
+                merged.push(mergedValue);
+                this.score += mergedValue;
+                hasMerged = true;
                 i += 2;
             } else {
                 merged.push(filtered[i]);
                 i++;
             }
+        }
+        
+        // Play merge sound
+        if (hasMerged) {
+            this.playSound(330, 80);
         }
         
         while (merged.length < this.size) {
@@ -354,9 +373,16 @@ class Game2048 {
         listElement.innerHTML = 'Loading...';
         
         try {
-            // Replace with your actual API Gateway URL after deployment
-            const response = await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/leaderboard');
+            const apiUrl = this.getApiUrl();
+            console.log('Loading leaderboard from:', apiUrl + '/leaderboard');
+            const response = await fetch(apiUrl + '/leaderboard');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const scores = await response.json();
+            console.log('Leaderboard response:', scores);
             
             if (scores.length === 0) {
                 listElement.innerHTML = '<p>No scores yet. Be the first!</p>';
@@ -391,33 +417,49 @@ class Game2048 {
         localStorage.setItem('2048-player-name', playerName);
         
         try {
-            const response = await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/score', {
+            const apiUrl = this.getApiUrl();
+            const payload = { playerName, score: this.score };
+            console.log('Submitting score to:', apiUrl + '/score', payload);
+            
+            const response = await fetch(apiUrl + '/score', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    playerName,
-                    score: this.score
-                })
+                body: JSON.stringify(payload)
             });
+            
+            console.log('Submit response status:', response.status);
+            const responseText = await response.text();
+            console.log('Submit response:', responseText);
             
             if (response.ok) {
                 alert('Score submitted successfully!');
                 document.getElementById('player-name').value = '';
                 await this.loadLeaderboard();
             } else {
-                alert('Failed to submit score');
+                alert(`Failed to submit score: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
-            alert('Failed to submit score');
+            alert('Failed to submit score: ' + error.message);
             console.error('Submit score error:', error);
         }
     }
 
+    getApiUrl() {
+        // Try to get API URL from window object (set by Terraform output)
+        if (window.API_GATEWAY_URL) {
+            return window.API_GATEWAY_URL;
+        }
+        // Fallback to hardcoded URL - replace with your actual API Gateway URL
+        return 'https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod';
+    }
+
     async autoSubmitHighScore(playerName) {
         try {
-            await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/score', {
+            const apiUrl = this.getApiUrl();
+            console.log('Auto-submitting high score:', this.highScore);
+            await fetch(apiUrl + '/score', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -432,7 +474,102 @@ class Game2048 {
         }
     }
 
+    initAudio() {
+        // Create audio context for sound effects
+        this.audioContext = null;
+        if (typeof AudioContext !== 'undefined') {
+            this.audioContext = new AudioContext();
+        } else if (typeof webkitAudioContext !== 'undefined') {
+            this.audioContext = new webkitAudioContext();
+        }
+    }
+
+    playSound(frequency = 440, duration = 100) {
+        if (!this.soundEnabled || !this.audioContext) return;
+        
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        } catch (error) {
+            console.log('Audio not supported');
+        }
+    }
+
+    loadSoundSetting() {
+        return localStorage.getItem('2048-sound') !== 'false';
+    }
+
+    saveSoundSetting() {
+        localStorage.setItem('2048-sound', this.soundEnabled.toString());
+    }
+
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        this.saveSoundSetting();
+        this.updateSoundButton();
+        
+        if (this.soundEnabled) {
+            this.playSound(523, 150); // Test sound
+        }
+    }
+
+    updateSoundButton() {
+        const button = document.getElementById('sound-button');
+        if (this.soundEnabled) {
+            button.textContent = '🔊 Sound';
+            button.classList.remove('muted');
+        } else {
+            button.textContent = '🔇 Sound';
+            button.classList.add('muted');
+        }
+    }
+
+    checkMilestones() {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                const tileValue = this.grid[i][j];
+                if (this.milestones.includes(tileValue) && !this.achievedMilestones.has(tileValue)) {
+                    this.achievedMilestones.add(tileValue);
+                    this.showMilestone(tileValue);
+                    return;
+                }
+            }
+        }
+    }
+
+    showMilestone(value) {
+        const popup = document.getElementById('milestone-popup');
+        const tile = document.getElementById('milestone-tile');
+        const text = document.getElementById('milestone-text');
+        
+        tile.textContent = value;
+        tile.className = `tile-${value}`;
+        text.textContent = `You reached the ${value} tile!`;
+        
+        popup.classList.remove('hidden');
+        
+        // Play milestone sound
+        this.playSound(659, 300);
+    }
+
+    closeMilestone() {
+        document.getElementById('milestone-popup').classList.add('hidden');
+    }
+
     restart() {
+        this.achievedMilestones.clear();
         this.init();
     }
 }

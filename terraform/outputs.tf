@@ -13,3 +13,8 @@ output "s3_bucket_name" {
   value       = aws_s3_bucket.game_bucket.bucket
 }
 
+output "api_gateway_url" {
+  description = "API Gateway URL for leaderboard"
+  value       = aws_apigatewayv2_api.leaderboard_api.api_endpoint
+}
+

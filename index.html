@@ -65,7 +65,17 @@
             <button class="restart-button" onclick="game.restart()">New Game</button>
             <button class="share-button" onclick="game.shareScore()">Share Score</button>
             <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
+            <button class="sound-button" onclick="game.toggleSound()" id="sound-button">🔊 Sound</button>
             <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
+        </div>
+        
+        <div id="milestone-popup" class="milestone-popup hidden">
+            <div class="milestone-content">
+                <h2 id="milestone-title">Milestone Achieved!</h2>
+                <div id="milestone-tile">128</div>
+                <p id="milestone-text">You reached the 128 tile!</p>
+                <button onclick="game.closeMilestone()">Continue</button>
+            </div>
         </div>
         
         <div id="leaderboard" class="leaderboard hidden">
@@ -77,6 +87,7 @@
             </div>
         </div>
     </div>
+    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

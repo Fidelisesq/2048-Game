@@ -76,11 +76,13 @@ jobs:
       run: |
         echo "s3_bucket=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
         echo "cloudfront_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
+        echo "api_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
       working-directory: ./terraform
     
     outputs:
       s3_bucket: ${{ steps.terraform-outputs.outputs.s3_bucket }}
       cloudfront_id: ${{ steps.terraform-outputs.outputs.cloudfront_id }}
+      api_url: ${{ steps.terraform-outputs.outputs.api_url }}
 
   deploy:
     needs: infrastructure
@@ -97,16 +99,19 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
     
+    - name: Create config file
+      run: |
+        echo "window.API_GATEWAY_URL = '${{ needs.infrastructure.outputs.api_url }}/prod';" > config.js
+    
     - name: Upload files to S3
       run: |
         aws s3 sync . s3://${{ needs.infrastructure.outputs.s3_bucket }}/ \
           --exclude ".git/*" \
           --exclude ".github/*" \
           --exclude "terraform/*" \
-          --exclude "Dockerfile" \
           --exclude "*.md" \
           --exclude "package.json" \
-          --exclude "test.js" \
+          --exclude "test*.js" \
           --exclude "node_modules/*"
     
     - name: Invalidate CloudFront
