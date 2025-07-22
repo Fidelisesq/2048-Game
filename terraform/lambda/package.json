@@ -1,0 +1,10 @@
+{
+  "name": "2048-leaderboard-api",
+  "version": "1.0.0",
+  "description": "Lambda function for 2048 game leaderboard",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0"
+  }
+}

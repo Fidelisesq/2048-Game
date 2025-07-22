@@ -44,9 +44,21 @@ resource "aws_lambda_function" "leaderboard_api" {
 data "archive_file" "leaderboard_zip" {
   type        = "zip"
   output_path = "leaderboard.zip"
-  source {
-    content = templatefile("${path.module}/lambda/leaderboard.js", {})
-    filename = "index.js"
+  source_dir  = "${path.module}/lambda"
+  excludes    = ["leaderboard.js"]
+  
+  depends_on = [null_resource.lambda_dependencies]
+}
+
+# Install npm dependencies for Lambda
+resource "null_resource" "lambda_dependencies" {
+  provisioner "local-exec" {
+    command = "cd lambda && npm install --production"
+  }
+  
+  triggers = {
+    package_json = filemd5("${path.module}/lambda/package.json")
+    index_js = filemd5("${path.module}/lambda/index.js")
   }
 }
 
