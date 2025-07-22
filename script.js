@@ -64,6 +64,12 @@ class Game2048 {
             this.highScore = this.score;
             this.saveHighScore();
             document.getElementById('high-score').textContent = this.highScore;
+            
+            // Auto-submit new high score if player name exists
+            const savedName = localStorage.getItem('2048-player-name');
+            if (savedName && this.highScore >= 1000) { // Only submit scores >= 1000
+                this.autoSubmitHighScore(savedName);
+            }
         }
     }
 
@@ -380,8 +386,10 @@ class Game2048 {
             return;
         }
         
+        // Save player name for auto-submissions
+        localStorage.setItem('2048-player-name', playerName);
+        
         try {
-            // Actual API Gateway URL after deployment
             const response = await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/score', {
                 method: 'POST',
                 headers: {
@@ -403,6 +411,23 @@ class Game2048 {
         } catch (error) {
             alert('Failed to submit score');
             console.error('Submit score error:', error);
+        }
+    }
+
+    async autoSubmitHighScore(playerName) {
+        try {
+            await fetch('https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod/score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    playerName: `${playerName} (auto)`,
+                    score: this.highScore
+                })
+            });
+        } catch (error) {
+            console.error('Auto-submit failed:', error);
         }
     }
 
