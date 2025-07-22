@@ -146,10 +146,16 @@ body {
 
 .button-container {
     display: flex;
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
     margin-top: 20px;
+    align-items: center;
+}
+
+.button-row {
+    display: flex;
+    gap: 6px;
     justify-content: center;
-    flex-wrap: wrap;
 }
 
 .restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
@@ -373,10 +379,22 @@ body.theme-neon .tile {
     }
     
     .game-container {
-        width: 100%;
+        width: calc(100vw - 40px);
         max-width: 400px;
-        height: auto;
-        aspect-ratio: 1;
+        height: calc(100vw - 40px);
+        max-height: 400px;
+    }
+    
+    .grid-cell {
+        width: calc((100% - 30px) / 4);
+        height: calc((100% - 30px) / 4);
+    }
+    
+    .tile {
+        width: calc((100% - 30px) / 4);
+        height: calc((100% - 30px) / 4);
+        line-height: calc((100vw - 70px) / 4);
+        font-size: calc((100vw - 70px) / 8);
     }
     
     .button-container {
