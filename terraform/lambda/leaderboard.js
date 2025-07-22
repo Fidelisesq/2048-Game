@@ -63,7 +63,7 @@ exports.handler = async (event) => {
             const params = {
                 TableName: '2048-leaderboard',
                 Item: {
-                    id: `$${Date.now()}-$${Math.random()}`,
+                    id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
                     playerName: playerName.toString(),
                     score: parseInt(score),
                     game_type: 'classic',
