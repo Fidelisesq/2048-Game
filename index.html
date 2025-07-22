@@ -19,14 +19,17 @@
     <div class="container">
         <div class="heading">
             <h1 class="title">2048</h1>
-            <div class="score-container">
-                <div class="score-box">
-                    <div class="score-label">SCORE</div>
-                    <div id="score">0</div>
-                </div>
-                <div class="score-box">
-                    <div class="score-label">BEST</div>
-                    <div id="high-score">0</div>
+            <div class="top-right">
+                <button class="sound-toggle" onclick="game.toggleSound()" id="sound-button">🔊</button>
+                <div class="score-container">
+                    <div class="score-box">
+                        <div class="score-label">SCORE</div>
+                        <div id="score">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="score-label">BEST</div>
+                        <div id="high-score">0</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -66,7 +69,6 @@
             <button class="restart-button" onclick="game.restart()">New Game</button>
             <button class="share-button" onclick="game.shareScore()">Share Score</button>
             <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
-            <button class="sound-button" onclick="game.toggleSound()" id="sound-button">🔊 Sound</button>
             <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
         </div>
         

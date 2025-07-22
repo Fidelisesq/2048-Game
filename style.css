@@ -36,10 +36,39 @@ body {
     color: #776e65;
 }
 
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .score-container {
     display: flex;
     gap: 8px;
-    margin-left: auto;
+}
+
+.sound-toggle {
+    background: #8f7a66;
+    color: #f9f6f2;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sound-toggle:hover {
+    background: #9f8a76;
+    transform: scale(1.1);
+}
+
+.sound-toggle.muted {
+    opacity: 0.5;
 }
 
 .score-box {
@@ -151,7 +180,7 @@ body {
     justify-content: center;
 }
 
-.restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
+.restart-button, .share-button, .theme-button, .leaderboard-button {
     background: #8f7a66;
     color: #f9f6f2;
     border: none;
@@ -160,14 +189,14 @@ body {
     font-size: 18px;
     cursor: pointer;
     transition: background 0.2s;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.restart-button:hover, .share-button:hover, .theme-button:hover, .sound-button:hover, .leaderboard-button:hover {
+.restart-button:hover, .share-button:hover, .theme-button:hover, .leaderboard-button:hover {
     background: #9f8a76;
-}
-
-.sound-button.muted {
-    opacity: 0.5;
 }
 
 .leaderboard {

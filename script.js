@@ -583,10 +583,10 @@ class Game2048 {
     updateSoundButton() {
         const button = document.getElementById('sound-button');
         if (this.soundEnabled) {
-            button.textContent = '🔊 Sound';
+            button.textContent = '🔊';
             button.classList.remove('muted');
         } else {
-            button.textContent = '🔇 Sound';
+            button.textContent = '🔇';
             button.classList.add('muted');
         }
     }
