@@ -17,19 +17,17 @@
 </head>
 <body>
     <div class="container">
+        <button class="sound-toggle" onclick="game.toggleSound()" id="sound-button">🔊</button>
         <div class="heading">
             <h1 class="title">2048</h1>
-            <div class="top-right">
-                <button class="sound-toggle" onclick="game.toggleSound()" id="sound-button">🔊</button>
-                <div class="score-container">
-                    <div class="score-box">
-                        <div class="score-label">SCORE</div>
-                        <div id="score">0</div>
-                    </div>
-                    <div class="score-box">
-                        <div class="score-label">BEST</div>
-                        <div id="high-score">0</div>
-                    </div>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">SCORE</div>
+                    <div id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">BEST</div>
+                    <div id="high-score">0</div>
                 </div>
             </div>
         </div>
