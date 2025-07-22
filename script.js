@@ -57,19 +57,8 @@ class Game2048 {
                     const tile = document.createElement('div');
                     tile.className = `tile tile-${this.grid[i][j]}`;
                     tile.textContent = this.grid[i][j];
-                    
-                    // Responsive positioning
-                    if (window.innerWidth <= 520) {
-                        const gameContainer = document.querySelector('.game-container');
-                        const containerWidth = gameContainer.offsetWidth;
-                        const tileSize = (containerWidth - 40) / 4;
-                        tile.style.left = `${j * (tileSize + 10) + 10}px`;
-                        tile.style.top = `${i * (tileSize + 10) + 10}px`;
-                    } else {
-                        tile.style.left = `${j * 117 + 10}px`;
-                        tile.style.top = `${i * 117 + 10}px`;
-                    }
-                    
+                    tile.style.left = `${j * 117 + 10}px`;
+                    tile.style.top = `${i * 117 + 10}px`;
                     container.appendChild(tile);
                 }
             }

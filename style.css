@@ -146,15 +146,8 @@ body {
 
 .button-container {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     margin-top: 20px;
-    align-items: center;
-}
-
-.button-row {
-    display: flex;
-    gap: 6px;
     justify-content: center;
 }
 
@@ -163,12 +156,10 @@ body {
     color: #f9f6f2;
     border: none;
     border-radius: 3px;
-    padding: 8px 12px;
-    font-size: 14px;
+    padding: 10px 20px;
+    font-size: 18px;
     cursor: pointer;
     transition: background 0.2s;
-    white-space: nowrap;
-    flex: 0 0 auto;
 }
 
 .restart-button:hover, .share-button:hover, .theme-button:hover, .sound-button:hover, .leaderboard-button:hover {
@@ -369,40 +360,3 @@ body.theme-neon .tile {
     }
 }
 
-@media (max-width: 520px) {
-    .container {
-        padding: 0 10px;
-    }
-    
-    .title {
-        font-size: 60px;
-    }
-    
-    .game-container {
-        width: calc(100vw - 40px);
-        max-width: 400px;
-        height: calc(100vw - 40px);
-        max-height: 400px;
-    }
-    
-    .grid-cell {
-        width: calc((100% - 30px) / 4);
-        height: calc((100% - 30px) / 4);
-    }
-    
-    .tile {
-        width: calc((100% - 30px) / 4);
-        height: calc((100% - 30px) / 4);
-        line-height: calc((100vw - 70px) / 4);
-        font-size: calc((100vw - 70px) / 8);
-    }
-    
-    .button-container {
-        gap: 4px;
-    }
-    
-    .restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-}

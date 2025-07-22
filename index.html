@@ -63,15 +63,11 @@
             <strong>HOW TO PLAY:</strong> Use arrow keys on PC or swipe on mobile to move tiles. When two tiles with the same number touch, they merge into one!
         </p>
         <div class="button-container">
-            <div class="button-row">
-                <button class="restart-button" onclick="game.restart()">New Game</button>
-                <button class="share-button" onclick="game.shareScore()">Share Score</button>
-                <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
-            </div>
-            <div class="button-row">
-                <button class="sound-button" onclick="game.toggleSound()" id="sound-button">🔊 Sound</button>
-                <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
-            </div>
+            <button class="restart-button" onclick="game.restart()">New Game</button>
+            <button class="share-button" onclick="game.shareScore()">Share Score</button>
+            <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
+            <button class="sound-button" onclick="game.toggleSound()" id="sound-button">🔊 Sound</button>
+            <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
         </div>
         
         <div id="milestone-popup" class="milestone-popup hidden">
