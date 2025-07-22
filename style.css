@@ -26,6 +26,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    gap: 20px;
 }
 
 .title {
@@ -37,16 +38,17 @@ body {
 
 .score-container {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    margin-left: auto;
 }
 
 .score-box {
     background: #bbada0;
-    padding: 10px 20px;
+    padding: 8px 12px;
     border-radius: 3px;
     color: white;
     text-align: center;
-    min-width: 60px;
+    min-width: 50px;
 }
 
 .score-label {
@@ -144,9 +146,10 @@ body {
 
 .button-container {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     margin-top: 20px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
@@ -154,10 +157,12 @@ body {
     color: #f9f6f2;
     border: none;
     border-radius: 3px;
-    padding: 10px 20px;
-    font-size: 18px;
+    padding: 8px 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: background 0.2s;
+    white-space: nowrap;
+    flex: 0 0 auto;
 }
 
 .restart-button:hover, .share-button:hover, .theme-button:hover, .sound-button:hover, .leaderboard-button:hover {
@@ -355,5 +360,31 @@ body.theme-neon .tile {
     100% {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+@media (max-width: 520px) {
+    .container {
+        padding: 0 10px;
+    }
+    
+    .title {
+        font-size: 60px;
+    }
+    
+    .game-container {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        aspect-ratio: 1;
+    }
+    
+    .button-container {
+        gap: 4px;
+    }
+    
+    .restart-button, .share-button, .theme-button, .sound-button, .leaderboard-button {
+        padding: 6px 8px;
+        font-size: 12px;
     }
 }

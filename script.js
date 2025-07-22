@@ -511,29 +511,52 @@ class Game2048 {
         if (!this.soundEnabled || !this.audioContext) return;
         
         try {
-            // Create metallic coin drop sound with multiple frequencies
-            const frequencies = [800, 1200, 600]; // Metallic harmonics
             const currentTime = this.audioContext.currentTime;
             
-            frequencies.forEach((freq, index) => {
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(freq, currentTime);
-                oscillator.type = 'triangle'; // More metallic than sine
-                
-                // Quick attack, fast decay for metallic ping
-                const volume = 0.08 / (index + 1); // Decreasing volume for harmonics
-                gainNode.gain.setValueAtTime(0, currentTime);
-                gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.01);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.15);
-                
-                oscillator.start(currentTime);
-                oscillator.stop(currentTime + 0.15);
-            });
+            // Main impact sound (coin hitting tray)
+            const impact = this.audioContext.createOscillator();
+            const impactGain = this.audioContext.createGain();
+            const impactFilter = this.audioContext.createBiquadFilter();
+            
+            impact.connect(impactFilter);
+            impactFilter.connect(impactGain);
+            impactGain.connect(this.audioContext.destination);
+            
+            impact.frequency.setValueAtTime(150, currentTime);
+            impact.type = 'square';
+            impactFilter.type = 'highpass';
+            impactFilter.frequency.setValueAtTime(100, currentTime);
+            
+            impactGain.gain.setValueAtTime(0.15, currentTime);
+            impactGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.05);
+            
+            impact.start(currentTime);
+            impact.stop(currentTime + 0.05);
+            
+            // Metallic ring (coin resonance)
+            const ring = this.audioContext.createOscillator();
+            const ringGain = this.audioContext.createGain();
+            const ringFilter = this.audioContext.createBiquadFilter();
+            
+            ring.connect(ringFilter);
+            ringFilter.connect(ringGain);
+            ringGain.connect(this.audioContext.destination);
+            
+            ring.frequency.setValueAtTime(2400, currentTime + 0.01);
+            ring.frequency.exponentialRampToValueAtTime(1800, currentTime + 0.3);
+            ring.type = 'sine';
+            
+            ringFilter.type = 'bandpass';
+            ringFilter.frequency.setValueAtTime(2000, currentTime);
+            ringFilter.Q.setValueAtTime(8, currentTime);
+            
+            ringGain.gain.setValueAtTime(0, currentTime);
+            ringGain.gain.linearRampToValueAtTime(0.08, currentTime + 0.02);
+            ringGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.4);
+            
+            ring.start(currentTime + 0.01);
+            ring.stop(currentTime + 0.4);
+            
         } catch (error) {
             console.log('Audio not supported');
         }
