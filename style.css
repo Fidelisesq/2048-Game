@@ -39,7 +39,7 @@ body {
 
 .score-container {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     margin-left: auto;
 }
 
@@ -47,7 +47,7 @@ body {
     display: flex;
     justify-content: flex-start;
     margin-top: 10px;
-    margin-left: calc(50% - 250px + 30px);
+    margin-left: calc(50% - 250px + 50px);
 }
 
 .sound-toggle {
@@ -76,7 +76,7 @@ body {
 
 .score-box {
     background: #bbada0;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 3px;
     color: white;
     text-align: center;
@@ -169,7 +169,7 @@ body {
 
 .button-container {
     display: flex;
-    gap: 10px;
+    gap: 5px;
     margin-top: 20px;
     justify-content: center;
 }
@@ -179,7 +179,7 @@ body {
     color: #f9f6f2;
     border: none;
     border-radius: 3px;
-    padding: 10px 20px;
+    padding: 8px 18px;
     font-size: 18px;
     cursor: pointer;
     transition: background 0.2s;

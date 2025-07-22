@@ -101,7 +101,7 @@ jobs:
     
     - name: Create config file
       run: |
-        echo "window.API_GATEWAY_URL = '${{ needs.infrastructure.outputs.api_url }}/prod';" > config.js
+        echo "window.API_GATEWAY_URL = '${{ needs.infrastructure.outputs.api_url }}';" > config.js
     
     - name: Upload files to S3
       run: |

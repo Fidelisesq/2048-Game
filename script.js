@@ -449,10 +449,13 @@ class Game2048 {
     getApiUrl() {
         // Try to get API URL from window object (set by Terraform output)
         if (window.API_GATEWAY_URL) {
+            console.log('Using dynamic API URL:', window.API_GATEWAY_URL);
             return window.API_GATEWAY_URL;
         }
         // Fallback to hardcoded URL - replace with your actual API Gateway URL
-        return 'https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod';
+        const fallbackUrl = 'https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod';
+        console.log('Using fallback API URL:', fallbackUrl);
+        return fallbackUrl;
     }
 
     async autoSubmitHighScore(playerName) {
