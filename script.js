@@ -59,11 +59,10 @@ class Game2048 {
 
     updateScore() {
         document.getElementById('score').textContent = this.score;
-        document.getElementById('high-score').textContent = this.highScore;
+        
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.saveHighScore();
-            document.getElementById('high-score').textContent = this.highScore;
             
             // Auto-submit new high score if player name exists
             const savedName = localStorage.getItem('2048-player-name');
@@ -71,6 +70,8 @@ class Game2048 {
                 this.autoSubmitHighScore(savedName);
             }
         }
+        
+        document.getElementById('high-score').textContent = this.highScore;
     }
 
     move(direction) {
