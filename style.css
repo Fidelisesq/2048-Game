@@ -47,7 +47,7 @@ body {
     display: flex;
     justify-content: flex-start;
     margin-top: 10px;
-    margin-left: calc(50% - 250px + 10px);
+    margin-left: calc(50% - 250px + 30px);
 }
 
 .sound-toggle {
