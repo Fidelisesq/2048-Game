@@ -173,9 +173,9 @@ class Game2048 {
             }
         }
         
-        // Play merge sound
+        // Play merge sound (metallic coin drop effect)
         if (hasMerged) {
-            this.playSound(330, 80);
+            this.playCoinSound();
         }
         
         while (merged.length < this.size) {
@@ -502,6 +502,38 @@ class Game2048 {
             
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        } catch (error) {
+            console.log('Audio not supported');
+        }
+    }
+
+    playCoinSound() {
+        if (!this.soundEnabled || !this.audioContext) return;
+        
+        try {
+            // Create metallic coin drop sound with multiple frequencies
+            const frequencies = [800, 1200, 600]; // Metallic harmonics
+            const currentTime = this.audioContext.currentTime;
+            
+            frequencies.forEach((freq, index) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, currentTime);
+                oscillator.type = 'triangle'; // More metallic than sine
+                
+                // Quick attack, fast decay for metallic ping
+                const volume = 0.08 / (index + 1); // Decreasing volume for harmonics
+                gainNode.gain.setValueAtTime(0, currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.15);
+                
+                oscillator.start(currentTime);
+                oscillator.stop(currentTime + 0.15);
+            });
         } catch (error) {
             console.log('Audio not supported');
         }
