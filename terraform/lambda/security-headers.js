@@ -10,7 +10,7 @@ exports.handler = async (event) => {
 
     headers['content-security-policy'] = [{
         key: 'Content-Security-Policy',
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     }];
 
     headers['x-content-type-options'] = [{
@@ -31,6 +31,11 @@ exports.handler = async (event) => {
     headers['referrer-policy'] = [{
         key: 'Referrer-Policy',
         value: 'strict-origin-when-cross-origin'
+    }];
+
+    headers['permissions-policy'] = [{
+        key: 'Permissions-Policy',
+        value: 'geolocation=(), microphone=(), camera=()'
     }];
 
     return response;
