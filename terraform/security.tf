@@ -9,6 +9,10 @@ resource "aws_lambda_function" "security_headers" {
   timeout         = 5
   publish         = true
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   depends_on = [data.archive_file.security_headers_zip]
 }
 

@@ -25,7 +25,8 @@ provider "aws" {
 
 # S3 Bucket for hosting
 resource "aws_s3_bucket" "game_bucket" {
-  bucket = "2048-game-${random_id.bucket_suffix.hex}"
+  bucket        = "2048-game-${random_id.bucket_suffix.hex}"
+  force_destroy = true
 }
 
 resource "random_id" "bucket_suffix" {
@@ -74,6 +75,11 @@ resource "aws_s3_bucket_policy" "game_bucket_policy" {
 
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "game_distribution" {
+  lifecycle {
+    create_before_destroy = true
+  }
+  
+  wait_for_deployment = false
   origin {
     domain_name = aws_s3_bucket_website_configuration.game_bucket_website.website_endpoint
     origin_id   = "S3-${aws_s3_bucket.game_bucket.bucket}"
