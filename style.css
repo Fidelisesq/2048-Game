@@ -39,15 +39,18 @@ body {
 
 .score-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     margin-left: auto;
-    margin-right: 80px;
+}
+
+.sound-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+    margin-left: calc(50% - 250px + 10px);
 }
 
 .sound-toggle {
-    position: absolute;
-    top: 0;
-    right: 0;
     background: #8f7a66;
     color: #f9f6f2;
     border: none;
@@ -60,7 +63,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
 }
 
 .sound-toggle:hover {

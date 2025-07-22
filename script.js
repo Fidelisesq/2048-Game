@@ -43,7 +43,7 @@ class Game2048 {
             this.grid[randomCell.x][randomCell.y] = Math.random() < 0.9 ? 2 : 4;
             
             // Play tile placement sound
-            this.playSound(220, 60);
+            this.playTilePlaceSound();
         }
     }
 
@@ -556,6 +556,43 @@ class Game2048 {
             
             ring.start(currentTime + 0.01);
             ring.stop(currentTime + 0.4);
+            
+        } catch (error) {
+            console.log('Audio not supported');
+        }
+    }
+
+    playTilePlaceSound() {
+        if (!this.soundEnabled || !this.audioContext) return;
+        
+        try {
+            const currentTime = this.audioContext.currentTime;
+            
+            // Soft pop sound for tile placement
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            const filter = this.audioContext.createBiquadFilter();
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            // Gentle frequency sweep for pleasant pop
+            osc.frequency.setValueAtTime(400, currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, currentTime + 0.1);
+            osc.type = 'sine';
+            
+            // Low-pass filter for softer sound
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, currentTime);
+            
+            // Gentle envelope
+            gain.gain.setValueAtTime(0, currentTime);
+            gain.gain.linearRampToValueAtTime(0.06, currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
+            
+            osc.start(currentTime);
+            osc.stop(currentTime + 0.12);
             
         } catch (error) {
             console.log('Audio not supported');

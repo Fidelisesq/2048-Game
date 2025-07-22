@@ -17,7 +17,6 @@
 </head>
 <body>
     <div class="container">
-        <button class="sound-toggle" onclick="game.toggleSound()" id="sound-button">🔊</button>
         <div class="heading">
             <h1 class="title">2048</h1>
             <div class="score-container">
@@ -68,6 +67,10 @@
             <button class="share-button" onclick="game.shareScore()">Share Score</button>
             <button class="theme-button" onclick="game.toggleTheme()">🎨 Theme</button>
             <button class="leaderboard-button" onclick="game.toggleLeaderboard()">🏆 Leaderboard</button>
+        </div>
+        
+        <div class="sound-container">
+            <button class="sound-toggle" onclick="game.toggleSound()" id="sound-button">🔊</button>
         </div>
         
         <div id="milestone-popup" class="milestone-popup hidden">
