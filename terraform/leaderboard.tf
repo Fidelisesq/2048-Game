@@ -34,7 +34,7 @@ resource "aws_lambda_function" "leaderboard_api" {
   function_name    = "2048-leaderboard-api"
   role            = aws_iam_role.lambda_role.arn
   handler         = "index.handler"
-  runtime         = "nodejs18.x"
+  runtime         = "nodejs20.x"
   timeout         = 10
 
   depends_on = [data.archive_file.leaderboard_zip]

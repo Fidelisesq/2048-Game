@@ -1,5 +1,8 @@
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+
+const client = new DynamoDBClient({});
+const dynamodb = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event) => {
     const headers = {
@@ -33,7 +36,7 @@ exports.handler = async (event) => {
                 Limit: 10
             };
 
-            const result = await dynamodb.query(params).promise();
+            const result = await dynamodb.send(new QueryCommand(params));
             return {
                 statusCode: 200,
                 headers,
@@ -69,7 +72,7 @@ exports.handler = async (event) => {
             };
 
             console.log('DynamoDB params:', params);
-            await dynamodb.put(params).promise();
+            await dynamodb.send(new PutCommand(params));
             return {
                 statusCode: 201,
                 headers,
