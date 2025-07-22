@@ -9,13 +9,17 @@ exports.handler = async (event) => {
     };
 
     try {
-        const { httpMethod, path } = event;
+        const { httpMethod, path, rawPath, routeKey } = event;
+        const actualPath = rawPath || path || routeKey;
+        
+        console.log('Event:', JSON.stringify(event, null, 2));
+        console.log('Method:', httpMethod, 'Path:', actualPath);
 
         if (httpMethod === 'OPTIONS') {
             return { statusCode: 200, headers };
         }
 
-        if (httpMethod === 'GET' && path === '/leaderboard') {
+        if (httpMethod === 'GET' && (actualPath === '/leaderboard' || actualPath?.endsWith('/leaderboard'))) {
             // Get top 10 scores
             const params = {
                 TableName: '2048-leaderboard',
@@ -36,7 +40,7 @@ exports.handler = async (event) => {
             };
         }
 
-        if (httpMethod === 'POST' && path === '/score') {
+        if (httpMethod === 'POST' && (actualPath === '/score' || actualPath?.endsWith('/score'))) {
             // Submit new score
             const body = JSON.parse(event.body);
             const { playerName, score } = body;

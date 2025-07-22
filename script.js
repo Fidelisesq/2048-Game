@@ -453,7 +453,7 @@ class Game2048 {
             return window.API_GATEWAY_URL;
         }
         // Fallback to hardcoded URL - replace with your actual API Gateway URL
-        const fallbackUrl = 'https://gu284dgt17.execute-api.us-east-1.amazonaws.com/prod';
+        const fallbackUrl = 'https://i4tar1ds8e.execute-api.us-east-1.amazonaws.com/prod';
         console.log('Using fallback API URL:', fallbackUrl);
         return fallbackUrl;
     }
