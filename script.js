@@ -318,18 +318,182 @@ class Game2048 {
         localStorage.setItem('2048-highscore', this.highScore.toString());
     }
 
-    shareScore() {
-        const text = `I scored ${this.score} points in 2048! Can you beat it?`;
-        if (navigator.share) {
-            navigator.share({
-                title: '2048 Game',
-                text: text,
-                url: window.location.href
-            });
-        } else {
-            navigator.clipboard.writeText(`${text} ${window.location.href}`);
-            alert('Score copied to clipboard!');
+    async shareScore() {
+        const text = `🎮 I just scored ${this.score.toLocaleString()} points in 2048! 🏆 Can you beat my score?`;
+        const url = window.location.href;
+        const title = '2048 Game Challenge';
+        
+        // Try to capture screenshot
+        let imageBlob = null;
+        try {
+            imageBlob = await this.captureGameScreenshot();
+        } catch (error) {
+            console.log('Screenshot not available:', error);
         }
+        
+        // Use native sharing if available (mobile)
+        if (navigator.share && imageBlob) {
+            try {
+                const file = new File([imageBlob], 'my-2048-score.png', { type: 'image/png' });
+                await navigator.share({
+                    title: title,
+                    text: text,
+                    url: url,
+                    files: [file]
+                });
+                return;
+            } catch (error) {
+                console.log('Native sharing with image failed:', error);
+            }
+        }
+        
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text, url });
+                return;
+            } catch (error) {
+                console.log('Native sharing failed:', error);
+            }
+        }
+        
+        // Fallback: Show share options
+        this.showShareOptions(text, url, imageBlob);
+    }
+    
+    async captureGameScreenshot() {
+        // Use html2canvas library if available, otherwise canvas API
+        const gameContainer = document.querySelector('.container');
+        
+        if (typeof html2canvas !== 'undefined') {
+            const canvas = await html2canvas(gameContainer, {
+                backgroundColor: '#faf8ef',
+                scale: 2,
+                useCORS: true
+            });
+            return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        }
+        
+        // Fallback: Create simple canvas representation
+        return this.createSimpleGameImage();
+    }
+    
+    createSimpleGameImage() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#faf8ef';
+        ctx.fillRect(0, 0, 400, 500);
+        
+        // Title
+        ctx.fillStyle = '#776e65';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('2048', 200, 50);
+        
+        // Score
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${this.score.toLocaleString()}`, 200, 80);
+        
+        // Grid background
+        ctx.fillStyle = '#bbada0';
+        ctx.fillRect(50, 100, 300, 300);
+        
+        // Draw tiles
+        const tileSize = 70;
+        const gap = 5;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const value = this.grid[i][j];
+                const x = 55 + j * (tileSize + gap);
+                const y = 105 + i * (tileSize + gap);
+                
+                if (value > 0) {
+                    // Tile background
+                    ctx.fillStyle = this.getTileColor(value);
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                    
+                    // Tile text
+                    ctx.fillStyle = value <= 4 ? '#776e65' : '#f9f6f2';
+                    ctx.font = value < 100 ? '24px Arial' : value < 1000 ? '20px Arial' : '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(value.toString(), x + tileSize/2, y + tileSize/2 + 8);
+                } else {
+                    // Empty tile
+                    ctx.fillStyle = '#cdc1b4';
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                }
+            }
+        }
+        
+        // Website URL
+        ctx.fillStyle = '#776e65';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('play-2048.fozdigitalz.com', 200, 450);
+        
+        return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+    
+    getTileColor(value) {
+        const colors = {
+            2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 16: '#f59563',
+            32: '#f67c5f', 64: '#f65e3b', 128: '#edcf72', 256: '#edcc61',
+            512: '#edc850', 1024: '#edc53f', 2048: '#edc22e'
+        };
+        return colors[value] || '#3c3a32';
+    }
+    
+    showShareOptions(text, url, imageBlob) {
+        // Create share modal
+        const modal = document.createElement('div');
+        modal.className = 'share-modal';
+        modal.innerHTML = `
+            <div class="share-content">
+                <h3>🎮 Share Your Score!</h3>
+                <p>${text}</p>
+                <div class="share-buttons">
+                    <button onclick="this.shareToTwitter('${encodeURIComponent(text)}', '${url}')" class="share-btn twitter">🐦 Twitter</button>
+                    <button onclick="this.shareToLinkedIn('${encodeURIComponent(text)}', '${url}')" class="share-btn linkedin">💼 LinkedIn</button>
+                    <button onclick="this.shareToFacebook('${url}')" class="share-btn facebook">📘 Facebook</button>
+                    <button onclick="this.copyToClipboard('${text} ${url}')" class="share-btn copy">📋 Copy Link</button>
+                    ${imageBlob ? '<button onclick="this.downloadImage()" class="share-btn download">📸 Download Image</button>' : ''}
+                </div>
+                <button onclick="this.closeShareModal()" class="close-btn">✕</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Store image blob for download
+        if (imageBlob) {
+            this.shareImageBlob = imageBlob;
+        }
+        
+        // Add event listeners
+        window.shareToTwitter = (text, url) => window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        window.shareToLinkedIn = (text, url) => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`, '_blank');
+        window.shareToFacebook = (url) => window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        window.copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard!');
+        };
+        window.downloadImage = () => {
+            if (this.shareImageBlob) {
+                const url = URL.createObjectURL(this.shareImageBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `2048-score-${this.score}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        };
+        window.closeShareModal = () => {
+            modal.remove();
+            delete this.shareImageBlob;
+        };
     }
 
     loadTheme() {
