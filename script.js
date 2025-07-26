@@ -71,12 +71,6 @@ class Game2048 {
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.saveHighScore();
-            
-            // Auto-submit new high score if player name exists
-            const savedName = localStorage.getItem('2048-player-name');
-            if (savedName && this.highScore >= 1000) { // Only submit scores >= 1000
-                this.autoSubmitHighScore(savedName);
-            }
         }
         
         document.getElementById('high-score').textContent = this.highScore;
@@ -142,6 +136,12 @@ class Game2048 {
         
         // Always check for loss after any move attempt
         if (this.checkLoss()) {
+            // Auto-submit final score if player name exists and score is high enough
+            const savedName = localStorage.getItem('2048-player-name');
+            if (savedName && this.score >= 1000) {
+                this.autoSubmitHighScore(savedName);
+            }
+            
             this.trackEvent('game_over', { 
                 score: this.score, 
                 moves: this.moveCount,
@@ -625,15 +625,15 @@ class Game2048 {
     async autoSubmitHighScore(playerName) {
         try {
             const apiUrl = this.getApiUrl();
-            console.log('Auto-submitting high score:', this.highScore);
+            console.log('Auto-submitting final score:', this.score);
             await fetch(apiUrl + '/score', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    playerName: `${playerName} (auto)`,
-                    score: this.highScore
+                    playerName: playerName,
+                    score: this.score
                 })
             });
         } catch (error) {
