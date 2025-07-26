@@ -3,7 +3,6 @@ resource "aws_dynamodb_table" "leaderboard" {
   name           = "2048-leaderboard"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "id"
-  range_key      = "score"
 
   attribute {
     name = "id"
@@ -96,7 +95,10 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
-        Resource = aws_dynamodb_table.leaderboard.arn
+        Resource = [
+          aws_dynamodb_table.leaderboard.arn,
+          "${aws_dynamodb_table.leaderboard.arn}/index/*"
+        ]
       },
       {
         Effect = "Allow"
