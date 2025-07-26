@@ -455,13 +455,13 @@ class Game2048 {
                 <h3>🎮 Share Your Score!</h3>
                 <p>${text}</p>
                 <div class="share-buttons">
-                    <button onclick="this.shareToTwitter('${encodeURIComponent(text)}', '${url}')" class="share-btn twitter">🐦 Twitter</button>
-                    <button onclick="this.shareToLinkedIn('${encodeURIComponent(text)}', '${url}')" class="share-btn linkedin">💼 LinkedIn</button>
-                    <button onclick="this.shareToFacebook('${url}')" class="share-btn facebook">📘 Facebook</button>
-                    <button onclick="this.copyToClipboard('${text} ${url}')" class="share-btn copy">📋 Copy Link</button>
-                    ${imageBlob ? '<button onclick="this.downloadImage()" class="share-btn download">📸 Download Image</button>' : ''}
+                    <button class="share-btn twitter">🐦 Twitter</button>
+                    <button class="share-btn linkedin">💼 LinkedIn</button>
+                    <button class="share-btn facebook">📘 Facebook</button>
+                    <button class="share-btn copy">📋 Copy Link</button>
+                    ${imageBlob ? '<button class="share-btn download">📸 Download Image</button>' : ''}
                 </div>
-                <button onclick="this.closeShareModal()" class="close-btn">✕</button>
+                <button class="close-btn">✕</button>
             </div>
         `;
         
@@ -472,27 +472,27 @@ class Game2048 {
             this.shareImageBlob = imageBlob;
         }
         
-        // Add event listeners
-        window.shareToTwitter = (text, url) => window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
-        window.shareToLinkedIn = (text, url) => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`, '_blank');
-        window.shareToFacebook = (url) => window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
-        window.copyToClipboard = (text) => {
-            navigator.clipboard.writeText(text);
+        // Add event listeners with proper binding
+        const self = this;
+        modal.querySelector('.twitter').onclick = () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
+        modal.querySelector('.linkedin').onclick = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${encodeURIComponent(text)}`, '_blank');
+        modal.querySelector('.facebook').onclick = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        modal.querySelector('.copy').onclick = () => {
+            navigator.clipboard.writeText(`${text} ${url}`);
             alert('Copied to clipboard!');
         };
-        window.downloadImage = () => {
-            if (this.shareImageBlob) {
-                const url = URL.createObjectURL(this.shareImageBlob);
+        if (imageBlob) {
+            modal.querySelector('.download').onclick = () => {
+                const imageUrl = URL.createObjectURL(imageBlob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `2048-score-${this.score}.png`;
+                a.href = imageUrl;
+                a.download = `2048-score-${self.score}.png`;
                 a.click();
-                URL.revokeObjectURL(url);
-            }
-        };
-        window.closeShareModal = () => {
+                URL.revokeObjectURL(imageUrl);
+            };
+        }
+        modal.querySelector('.close-btn').onclick = () => {
             modal.remove();
-            delete this.shareImageBlob;
         };
     }
 
