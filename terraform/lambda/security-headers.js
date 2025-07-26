@@ -8,11 +8,10 @@ exports.handler = async (event) => {
         value: 'max-age=31536000; includeSubDomains'
     }];
 
-    // Temporarily disabled CSP for testing
-    // headers['content-security-policy'] = [{
-    //     key: 'Content-Security-Policy',
-    //     value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://i4tar1ds8e.execute-api.us-east-1.amazonaws.com https://*.execute-api.us-east-1.amazonaws.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    // }];
+    headers['content-security-policy'] = [{
+        key: 'Content-Security-Policy',
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://i4tar1ds8e.execute-api.us-east-1.amazonaws.com https://*.execute-api.us-east-1.amazonaws.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    }];
 
     headers['x-content-type-options'] = [{
         key: 'X-Content-Type-Options',
