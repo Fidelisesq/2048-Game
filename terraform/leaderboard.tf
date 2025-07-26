@@ -35,6 +35,7 @@ resource "aws_lambda_function" "leaderboard_api" {
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 10
+  source_code_hash = data.archive_file.leaderboard_zip.output_base64sha256
 
   depends_on = [data.archive_file.leaderboard_zip]
 }
