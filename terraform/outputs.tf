@@ -15,6 +15,6 @@ output "s3_bucket_name" {
 
 output "api_gateway_url" {
   description = "API Gateway URL for leaderboard"
-  value       = aws_apigatewayv2_api.leaderboard_api.api_endpoint
+  value       = "${aws_apigatewayv2_api.leaderboard_api.api_endpoint}/prod"
 }
 
